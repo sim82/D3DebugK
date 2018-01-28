@@ -6,24 +6,26 @@ import javafx.collections.FXCollections
 import tornadofx.*
 
 class ScriptsController : Controller() {
-    val debugConnection = DebugConnection()
+    private val debugConnection = DebugConnection()
 
     init {
-        debugConnection.scriptInfoRequest() {
+        debugConnection.scriptInfoRequest {
             for ((index, name) in it) {
                 val script = Script(index, name)
-                values.add(index, script);
+                values.add(index, script)
                 script.sourcecode = "Please wait"
-//                debugConnection.scriptGetRequest(index) { sourcecode ->
-//                    script.sourcecode = sourcecode.joinToString("\n")
-//                    script.sourcecode2 = FXCollections.observableArrayList<String>(sourcecode.asList())
-//                }
             }
         }
     }
 
-    val values = FXCollections.observableArrayList<Script>()
+    val values = FXCollections.observableArrayList<Script>()!!
     fun requestSource(id: Int) {
+        if (values[id].sourcecodeRequested) {
+            return
+        }
+
+        values[id].sourcecodeRequested = true
+
         debugConnection.scriptGetRequest(id) { sourcecode ->
             values[id].sourcecode = sourcecode.joinToString("\n")
             values[id].sourcecode2 = FXCollections.observableArrayList<String>(sourcecode.asList())

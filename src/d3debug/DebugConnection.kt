@@ -47,7 +47,7 @@ constructor() {
     private fun doReadHeader() {
         headerBuffer.rewind()
 
-        socket!!.read<AsynchronousSocketChannel>(headerBuffer, socket, object : CompletionHandler<Int, AsynchronousSocketChannel> {
+        socket.read<AsynchronousSocketChannel>(headerBuffer, socket, object : CompletionHandler<Int, AsynchronousSocketChannel> {
             override fun completed(size: Int?, socket: AsynchronousSocketChannel) {
                 headerBuffer.rewind()
                 val ib = headerBuffer.asIntBuffer()
@@ -66,7 +66,7 @@ constructor() {
     }
 
     private fun doReadMessage(messageBuffer: ByteBuffer) {
-        socket!!.read<AsynchronousSocketChannel>(messageBuffer, socket, object : CompletionHandler<Int, AsynchronousSocketChannel> {
+        socket.read<AsynchronousSocketChannel>(messageBuffer, socket, object : CompletionHandler<Int, AsynchronousSocketChannel> {
             override fun completed(integer: Int?, asynchronousSocketChannel: AsynchronousSocketChannel) {
                 messageBuffer.rewind()
                 handleMessage(messageBuffer)
@@ -84,7 +84,7 @@ constructor() {
         val b = RequestBuilder()
         val debugRequest = b.initBuilder(Game.DebugRequest.factory)
 
-        debugRequest.initScriptInfo();
+        debugRequest.initScriptInfo()
         scriptInfoReplyHandlers[nextToken] = h
         debugRequest.token = nextToken++
 
@@ -92,7 +92,7 @@ constructor() {
     }
 
 
-    var scriptInfoReplyHandlers = HashMap<Long, ScriptInfoReplyHandler>()
+    private var scriptInfoReplyHandlers = HashMap<Long, ScriptInfoReplyHandler>()
 
 
     fun scriptGetRequest(id: Int, h: ScriptGetReplyHandler) {
@@ -107,7 +107,7 @@ constructor() {
         b.write(socket)
     }
 
-    var scriptGetReplyHandlers = HashMap<Long, ScriptGetReplyHandler>()
+    private var scriptGetReplyHandlers = HashMap<Long, ScriptGetReplyHandler>()
 
     private fun handleMessage(messageBuffer: ByteBuffer) = try {
         println("messageBuffer=$messageBuffer")
@@ -130,7 +130,7 @@ constructor() {
         val scriptGet = debugReply.scriptGet
 
         val sourceLines = scriptGet.sourceLines
-        val sourcecode = Array<String>(sourceLines.size()) { i ->
+        val sourcecode = Array(sourceLines.size()) { i ->
             sourceLines[i].toString()
         }
 
@@ -141,7 +141,7 @@ constructor() {
     }
 
     private fun handleScriptInfoReply(debugReply: Game.DebugReply.Reader) {
-        val scriptInfo = debugReply.getScriptInfo()
+        val scriptInfo = debugReply.scriptInfo
         val m = HashMap<Int, String>()
 
         val size = scriptInfo.size()
@@ -151,7 +151,7 @@ constructor() {
             m[id] = name.toString()
         }
 
-        val handler = scriptInfoReplyHandlers[debugReply.token];
+        val handler = scriptInfoReplyHandlers[debugReply.token]
         if (handler != null) {
             handler(m)
         }
@@ -159,11 +159,7 @@ constructor() {
 
 
     internal inner class RequestBuilder {
-        private val messageBuilder: MessageBuilder
-
-        init {
-            messageBuilder = MessageBuilder()
-        }
+        private val messageBuilder: MessageBuilder = MessageBuilder()
 
         fun <TMessage> initBuilder(factory: FromPointerBuilder<TMessage>): TMessage {
             return messageBuilder.initRoot(factory)

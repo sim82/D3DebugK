@@ -11,11 +11,8 @@ internal class AsyncSyncByteChannelAdapter(private val asyncChannel: Asynchronou
     private var outstandingWrite: Future<Int>? = null
 
     @Synchronized
-    fun checkOutstandingWrite() {
-        val ow = outstandingWrite;
-        if (ow == null) {
-            return;
-        }
+    private fun checkOutstandingWrite() {
+        val ow = outstandingWrite ?: return
 
         if (!ow.isDone) {
             try {
@@ -33,7 +30,7 @@ internal class AsyncSyncByteChannelAdapter(private val asyncChannel: Asynchronou
 
     @Throws(IOException::class)
     override fun write(byteBuffer: ByteBuffer): Int {
-        checkOutstandingWrite();
+        checkOutstandingWrite()
         outstandingWrite = asyncChannel.write(byteBuffer)
         return byteBuffer.limit()
     }
