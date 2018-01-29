@@ -16,6 +16,7 @@ import java.util.HashMap
 
 typealias ScriptInfoReplyHandler = (Map<Int, String>) -> Unit
 typealias ScriptGetReplyHandler = (Array<String>) -> Unit
+typealias AddBreakpointReplyHandler = (Int) -> Unit
 
 class DebugConnection @Throws(IOException::class)
 constructor() {
@@ -79,69 +80,94 @@ constructor() {
         })
     }
 
-
-    internal fun scriptInfoRequest(h: ScriptInfoReplyHandler) {
-        val b = RequestBuilder()
-        val debugRequest = b.initBuilder(Game.DebugRequest.factory)
-
-        debugRequest.initScriptInfo()
-        scriptInfoReplyHandlers[nextToken] = h
-        debugRequest.token = nextToken++
-
-        b.write(socket)
-    }
-
-
     private var scriptInfoReplyHandlers = HashMap<Long, ScriptInfoReplyHandler>()
+    internal fun scriptInfoRequest(h: ScriptInfoReplyHandler) {
+        withDebugRequest { debugRequest ->
 
-
-    fun scriptGetRequest(id: Int, h: ScriptGetReplyHandler) {
-        val b = RequestBuilder()
-        val debugRequest = b.initBuilder(Game.DebugRequest.factory)
-
-        val scriptGet = debugRequest.initScriptGet()
-        scriptGet.id = id
-
-        scriptGetReplyHandlers[nextToken] = h
-        debugRequest.token = nextToken++
-        b.write(socket)
+            debugRequest.initScriptInfo()
+            scriptInfoReplyHandlers[nextToken] = h
+        }
     }
+
 
     private var scriptGetReplyHandlers = HashMap<Long, ScriptGetReplyHandler>()
+    fun scriptGetRequest(id: Int, h: ScriptGetReplyHandler) {
+        withDebugRequest { debugRequest ->
 
-    private fun handleMessage(messageBuffer: ByteBuffer) = try {
-        println("messageBuffer=$messageBuffer")
-        val messageReader = Serialize.read(messageBuffer)
+            debugRequest.initScriptGet().let {
+                it.id = id
+            }
 
-        val debugReply = messageReader.getRoot(Game.DebugReply.factory)
-        val which = debugReply.which()
-
-        when (debugReply.which()) {
-            Game.DebugReply.Which.SCRIPT_INFO -> handleScriptInfoReply(debugReply)
-            Game.DebugReply.Which.SCRIPT_GET -> handleScriptGet(debugReply)
-            else -> System.err.println("unhandled DebugReply")
+            scriptGetReplyHandlers[nextToken] = h
         }
-
-    } catch (e: IOException) {
-        e.printStackTrace()
     }
+
+
+    private val addBreakpointReplyHandlers = HashMap<Long, AddBreakpointReplyHandler>()
+    fun addBreakpoint( scriptId : Int, line : Int, h : AddBreakpointReplyHandler )
+    {
+        withDebugRequest { debugRequest ->
+            debugRequest.initAddBreakpoint() .let {
+                it.id = scriptId
+                it.line = line
+            }
+            addBreakpointReplyHandlers[nextToken] = h
+        }
+    }
+
+    private inline fun withDebugRequest(h : (Game.DebugRequest.Builder) -> Unit) {
+        val b = RequestBuilder()
+        val debugRequest = b.initBuilder(Game.DebugRequest.factory)!!
+        h(debugRequest)
+        debugRequest.token = nextToken++
+        b.write(socket)
+    }
+
+
+    private fun handleMessage(messageBuffer: ByteBuffer) {
+        try {
+            println("messageBuffer=$messageBuffer")
+            val messageReader = Serialize.read(messageBuffer)
+
+            val debugReply = messageReader.getRoot(Game.DebugReply.factory) ?: return
+
+            val which = debugReply.which()
+
+            when (debugReply.which()) {
+                Game.DebugReply.Which.SCRIPT_INFO -> handleScriptInfoReply(debugReply)
+                Game.DebugReply.Which.SCRIPT_GET -> handleScriptGet(debugReply)
+                Game.DebugReply.Which.ADD_BREAKPOINT -> handleAddBreakpoint(debugReply)
+                else -> System.err.println("unhandled DebugReply")
+            }
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun handleAddBreakpoint(debugReply: Game.DebugReply.Reader) {
+        val addBreakpoint = debugReply.addBreakpoint
+        val handler = addBreakpointReplyHandlers.remove(debugReply.token) ?: return
+        handler(addBreakpoint.breakpointId)
+    }
+
 
     private fun handleScriptGet(debugReply: Game.DebugReply.Reader) {
         val scriptGet = debugReply.scriptGet
+        val handler = scriptGetReplyHandlers.remove(debugReply.token) ?: return
+
 
         val sourceLines = scriptGet.sourceLines
         val sourcecode = Array(sourceLines.size()) { i ->
             sourceLines[i].toString()
         }
-
-        val handler = scriptGetReplyHandlers[debugReply.token]
-        if (handler != null) {
-            handler(sourcecode)
-        }
+        handler(sourcecode)
     }
 
     private fun handleScriptInfoReply(debugReply: Game.DebugReply.Reader) {
         val scriptInfo = debugReply.scriptInfo
+        val handler = scriptInfoReplyHandlers.remove(debugReply.token) ?: return
+
         val m = HashMap<Int, String>()
 
         val size = scriptInfo.size()
@@ -150,11 +176,7 @@ constructor() {
             val name = info.sourceName
             m[id] = name.toString()
         }
-
-        val handler = scriptInfoReplyHandlers[debugReply.token]
-        if (handler != null) {
-            handler(m)
-        }
+        handler(m)
     }
 
 

@@ -48,7 +48,6 @@ public final class ArrayOutputStream implements BufferedOutputStream {
     }
 
     public final void close() {
-        return;
     }
 
     public final boolean isOpen() {

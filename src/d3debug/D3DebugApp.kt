@@ -1,9 +1,9 @@
 package d3debug
 
-import d3debug.controllers.ScriptsController
-import d3debug.viewmodels.ScriptModel
 import d3debug.views.ScriptList
 import d3debug.views.ScriptView
+import d3debug.views.WatchpointList
+import d3debug.views.WatchpointView
 import tornadofx.*
 import javafx.application.*
 
@@ -19,7 +19,17 @@ class D3DebugApp : App(Workspace::class) {
                 this += ScriptList()
                 expanded = true
             }
+            item("Watchpoints") {
+                this += WatchpointList()
+            }
         }
+        with(workspace.bottomDrawer) {
+            item("Watchpoints") {
+                this += WatchpointView()
+
+            }
+        }
+
         workspace.dock<ScriptView>()
 
     }

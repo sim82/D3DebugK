@@ -2,11 +2,18 @@ package d3debug.controllers
 
 import d3debug.DebugConnection
 import d3debug.domain.Script
+import d3debug.domain.Watchpoint
+import d3debug.viewmodels.ScriptModel
 import javafx.collections.FXCollections
 import tornadofx.*
 
 class ScriptsController : Controller() {
     private val debugConnection = DebugConnection()
+    val values = FXCollections.observableArrayList<Script>()!!
+
+    val watchpoints = FXCollections.observableArrayList<Watchpoint>()!!
+
+    val scriptModel : ScriptModel by inject()
 
     init {
         debugConnection.scriptInfoRequest {
@@ -16,10 +23,16 @@ class ScriptsController : Controller() {
                 script.sourcecode = "Please wait"
             }
         }
+
+        scriptModel.id.onChange {
+            requestSource(it!!.toInt())
+        }
+
+        watchpoints.add(Watchpoint(1, 7, 666))
     }
 
-    val values = FXCollections.observableArrayList<Script>()!!
-    fun requestSource(id: Int) {
+
+    private fun requestSource(id: Int) {
         if (values[id].sourcecodeRequested) {
             return
         }

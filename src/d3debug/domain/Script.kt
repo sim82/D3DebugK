@@ -1,12 +1,16 @@
 package d3debug.domain
 
+import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import tornadofx.*
 
-class Script(val id: Int, name: String, sourcecode: Array<String>? = null) {
+class Script(id: Int, name: String, sourcecode: Array<String>? = null) {
+    val idProperty = SimpleIntegerProperty(this, "id", id);
+    var id by idProperty
+
     val nameProperty = SimpleStringProperty(this, "name", name)
     var name: String by nameProperty
 

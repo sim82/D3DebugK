@@ -10,11 +10,12 @@ class ScriptList : View() {
 
     override val root = listview(controller.values) {
         bindSelected(scriptModel)
-        onUserSelect(1) {
-            controller.requestSource(it.id)
-        }
+//        onUserSelect(1) {
+//            controller.requestSource(it.id)
+//        }
         cellFormat {
             text = it.name
         }
     }
 }
+
