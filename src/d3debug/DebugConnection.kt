@@ -17,6 +17,10 @@ import java.util.HashMap
 typealias ScriptInfoReplyHandler = (Map<Int, String>) -> Unit
 typealias ScriptGetReplyHandler = (Array<String>) -> Unit
 typealias AddBreakpointReplyHandler = (Int) -> Unit
+typealias ExecuteReplyHandler = (String, Boolean) -> Unit
+
+typealias EventWatchpointHandler = (Int, Int, Int, ArrayList<String>) -> Unit
+
 
 class DebugConnection @Throws(IOException::class)
 constructor() {
@@ -104,10 +108,9 @@ constructor() {
 
 
     private val addBreakpointReplyHandlers = HashMap<Long, AddBreakpointReplyHandler>()
-    fun addBreakpoint( scriptId : Int, line : Int, h : AddBreakpointReplyHandler )
-    {
+    fun addBreakpoint(scriptId: Int, line: Int, h: AddBreakpointReplyHandler) {
         withDebugRequest { debugRequest ->
-            debugRequest.initAddBreakpoint() .let {
+            debugRequest.initAddBreakpoint().let {
                 it.id = scriptId
                 it.line = line
             }
@@ -115,12 +118,28 @@ constructor() {
         }
     }
 
-    private inline fun withDebugRequest(h : (Game.DebugRequest.Builder) -> Unit) {
+    private val executeReplyHandlers = HashMap<Long, ExecuteReplyHandler>()
+    fun execute(script: String, h: ExecuteReplyHandler) {
+        withDebugRequest { debugRequest ->
+            debugRequest.initExecute().let {
+                it.setScript(script)
+                it.immediate = true
+            }
+            executeReplyHandlers[nextToken] = h
+        }
+
+    }
+
+    private inline fun withDebugRequest(h: (Game.DebugRequest.Builder) -> Unit) {
         val b = RequestBuilder()
         val debugRequest = b.initBuilder(Game.DebugRequest.factory)!!
         h(debugRequest)
         debugRequest.token = nextToken++
         b.write(socket)
+    }
+
+    fun subscribeEventWatchpoint(h: EventWatchpointHandler) {
+        eventWatchpointHandlers.add(h)
     }
 
 
@@ -137,6 +156,8 @@ constructor() {
                 Game.DebugReply.Which.SCRIPT_INFO -> handleScriptInfoReply(debugReply)
                 Game.DebugReply.Which.SCRIPT_GET -> handleScriptGet(debugReply)
                 Game.DebugReply.Which.ADD_BREAKPOINT -> handleAddBreakpoint(debugReply)
+                Game.DebugReply.Which.EVENT_WATCHPOINT -> handleEventWatchpoint(debugReply)
+                Game.DebugReply.Which.EXECUTE -> handleExecute(debugReply)
                 else -> System.err.println("unhandled DebugReply")
             }
 
@@ -145,10 +166,21 @@ constructor() {
         }
     }
 
+
+    fun runOnUiThread(op: () -> Unit) {
+        if (com.sun.glass.ui.Application.isEventThread()) {
+            op()
+        } else {
+            javafx.application.Platform.runLater(op)
+        }
+    }
+
     private fun handleAddBreakpoint(debugReply: Game.DebugReply.Reader) {
         val addBreakpoint = debugReply.addBreakpoint
         val handler = addBreakpointReplyHandlers.remove(debugReply.token) ?: return
-        handler(addBreakpoint.breakpointId)
+        runOnUiThread {
+            handler(addBreakpoint.breakpointId)
+        }
     }
 
 
@@ -161,7 +193,9 @@ constructor() {
         val sourcecode = Array(sourceLines.size()) { i ->
             sourceLines[i].toString()
         }
-        handler(sourcecode)
+        runOnUiThread {
+            handler(sourcecode)
+        }
     }
 
     private fun handleScriptInfoReply(debugReply: Game.DebugReply.Reader) {
@@ -176,9 +210,41 @@ constructor() {
             val name = info.sourceName
             m[id] = name.toString()
         }
-        handler(m)
+        runOnUiThread {
+            handler(m)
+        }
     }
 
+    private fun handleExecute(debugReply: Game.DebugReply.Reader) {
+
+        val handler = executeReplyHandlers.remove(debugReply.token) ?: return
+
+        val execute = debugReply.execute;
+
+        runOnUiThread {
+            handler(execute.consoleOutput.toString(), execute.error)
+        }
+
+    }
+
+    private fun handleEventWatchpoint(debugReply: Game.DebugReply.Reader) {
+        val eventWatchpoint = debugReply.eventWatchpoint
+
+        runOnUiThread {
+            for (h in eventWatchpointHandlers) {
+                val localNames = ArrayList<String>();
+                localNames.ensureCapacity(eventWatchpoint.localNames.size())
+
+                eventWatchpoint.localNames.mapTo(localNames) {
+                    it.toString()
+                }
+                h(eventWatchpoint.watchpointId, eventWatchpoint.scriptId, eventWatchpoint.line, localNames)
+
+            }
+        }
+    }
+
+    val eventWatchpointHandlers = HashSet<EventWatchpointHandler>()
 
     internal inner class RequestBuilder {
         private val messageBuilder: MessageBuilder = MessageBuilder()

@@ -1,9 +1,6 @@
 package d3debug
 
-import d3debug.views.ScriptList
-import d3debug.views.ScriptView
-import d3debug.views.WatchpointList
-import d3debug.views.WatchpointView
+import d3debug.views.*
 import tornadofx.*
 import javafx.application.*
 
@@ -27,6 +24,9 @@ class D3DebugApp : App(Workspace::class) {
             item("Watchpoints") {
                 this += WatchpointView()
 
+            }
+            item( "Exec" ) {
+                this += ExecuteView()
             }
         }
 
