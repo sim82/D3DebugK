@@ -35,7 +35,11 @@ class AssetView : View() {
         cellCache {
             it.image2 = assetsController.fallbackImage
             it.loadImageAsync()
-            imageview(it.imageProperty)
+            imageview(it.imageProperty) {
+
+                fitWidth = 128.0
+                fitHeight = 128.0
+            }
             //it.loadImage()
 //            imageview(Image("file:///home/sim/digiKam_pictures/2004-07-19_23-56-33/dsc00006.jpg"))
 //            label(it.nameProperty)

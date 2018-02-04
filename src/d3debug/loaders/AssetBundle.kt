@@ -26,6 +26,7 @@ package d3debug.loaders
 
 import d3cp.AssetCp
 import d3debug.domain.Asset
+import org.capnproto.ReaderOptions
 import org.capnproto.Serialize
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
@@ -37,7 +38,8 @@ class AssetBundle(val filename : String) {
         FileInputStream(filename).channel?.use { fileChannel ->
             val map = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,fileChannel.size())!!
 
-            val reader = Serialize.read(map)!!
+
+            val reader = Serialize.read(map, ReaderOptions(1024*1024*1024, 64))!!
 
             reader.getRoot(AssetCp.AssetBundle.factory)?.let { assetBundle ->
                 for ( asset in assetBundle.assets)

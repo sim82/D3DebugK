@@ -104,9 +104,9 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
 
     fun toJavafxPixelformat( f : AssetPixelFormat ) = when(f)
     {
-        AssetPixelFormat.RGBA -> PixelFormat.Type.INT_ARGB
-        AssetPixelFormat.RGB -> PixelFormat.Type.BYTE_RGB
-        AssetPixelFormat.BGR -> PixelFormat.Type.BYTE_RGB
+        AssetPixelFormat.RGBA -> PixelFormat.getByteBgraInstance()
+        AssetPixelFormat.RGB -> PixelFormat.getByteRgbInstance()
+        AssetPixelFormat.BGR -> PixelFormat.getByteRgbInstance()
         else -> null
     }
 
@@ -118,7 +118,9 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
             return null
         }
 
-        toJavafxPixelformat(intToAssetPixelFormat(cooked.pixelFormat))?.let {
+
+        val assetPixelFormat = intToAssetPixelFormat(cooked.pixelFormat)
+        toJavafxPixelformat(assetPixelFormat)?.let {
             cooked.pixelFormat
 
             val width = cooked.levels[0].width
@@ -130,7 +132,10 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
             val bytes = ByteArray(data.limit())
             data.get(bytes)
 
-//            pixelWriter.setPixels(0, 0, width, height, it, bytes, 0, width * intToAssetPixelFormat(cooked.pixelFormat).pixelSize)
+            pixelWriter.setPixels(0, 0, width, height, it, bytes, 0, width * assetPixelFormat.pixelSize)
+
+
+            return image
         }
         return null
 
@@ -145,7 +150,7 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
     fun loadImageAsync() {
 
         runAsync {
-            //            Thread.sleep(300)
+                        Thread.sleep(300)
 //            try {
                 createImageFromReader()
 //            } catch( x :IllegalArgumentException )
