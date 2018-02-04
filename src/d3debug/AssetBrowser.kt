@@ -24,40 +24,16 @@
 
 package d3debug
 
-import d3debug.controllers.AssetsController
 import d3debug.views.*
+import javafx.application.Application
 import tornadofx.*
-import javafx.application.*
 
 
-//class d3debug.D3DebugApp : App(d3debug.TfxTest::class)
-
-class D3DebugApp : App(Workspace::class) {
-
-    val assetController : AssetsController by inject()
+class AssetBrowser : App(Workspace::class) {
 
     override fun onBeforeShow(view: UIComponent) {
-        with(workspace.leftDrawer)
-        {
-            item("Scripts") {
-                this += ScriptList()
-                expanded = true
-            }
-            item("Watchpoints") {
-                this += WatchpointList()
-            }
-        }
-        with(workspace.bottomDrawer) {
-            item("Watchpoints") {
-                this += WatchpointView()
 
-            }
-            item( "Exec" ) {
-                this += ExecuteView()
-            }
-        }
-
-        workspace.dock<ScriptView>()
+        workspace.dock<AssetView>()
 
     }
 }
@@ -65,5 +41,5 @@ class D3DebugApp : App(Workspace::class) {
 
 
 fun main(args: Array<String>) {
-    Application.launch(D3DebugApp::class.java, *args)
+    Application.launch(AssetBrowser::class.java, *args)
 }

@@ -39,3 +39,4 @@ class WatchpointView : View() {
         listview( watchpointModel.traces )
     }
 }
+

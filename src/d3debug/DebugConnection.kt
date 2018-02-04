@@ -35,6 +35,7 @@ import java.nio.ByteOrder
 import java.nio.channels.AsynchronousByteChannel
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.channels.CompletionHandler
+import java.nio.channels.SocketChannel
 import java.util.HashMap
 
 
@@ -50,7 +51,7 @@ class DebugConnection @Throws(IOException::class)
 constructor() {
 
 
-    private var socket: AsynchronousSocketChannel = AsynchronousSocketChannel.open()
+    private var socket = AsynchronousSocketChannel.open()
     private val headerBuffer: ByteBuffer = ByteBuffer.allocate(4)
     private var nextToken: Long = 1
 
@@ -78,14 +79,16 @@ constructor() {
 
         socket.read<AsynchronousSocketChannel>(headerBuffer, socket, object : CompletionHandler<Int, AsynchronousSocketChannel> {
             override fun completed(size: Int?, socket: AsynchronousSocketChannel) {
+
                 headerBuffer.rewind()
-                val ib = headerBuffer.asIntBuffer()
+                val ib = headerBuffer.asIntBuffer() ?: return
 
                 val nextMessageSize = ib.get()
                 println("nextMessageSize=$nextMessageSize")
 
-                val messageBuffer = ByteBuffer.allocate(nextMessageSize)
-                doReadMessage(messageBuffer)
+                ByteBuffer.allocate(nextMessageSize)?.let{
+                    doReadMessage(it)
+                }
             }
 
             override fun failed(throwable: Throwable, asynchronousSocketChannel: AsynchronousSocketChannel) {

@@ -22,48 +22,34 @@
  *
  */
 
-package d3debug
+package d3debug.controllers
 
-import d3debug.controllers.AssetsController
-import d3debug.views.*
+import d3debug.loaders.AssetDir
+import d3debug.domain.Asset
+import d3debug.loaders.AssetBundle
+import javafx.collections.FXCollections
+import javafx.scene.canvas.Canvas
+import javafx.scene.image.Image
+import javafx.scene.image.WritableImage
+import javafx.scene.paint.Color
 import tornadofx.*
-import javafx.application.*
 
+class AssetsController : Controller() {
 
-//class d3debug.D3DebugApp : App(d3debug.TfxTest::class)
+//    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla")
+    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/out.bundle")
 
-class D3DebugApp : App(Workspace::class) {
+    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets)!!
 
-    val assetController : AssetsController by inject()
+    val fallbackImage: Image by lazy {
+        val canvas = Canvas(32.0, 32.0)
+        val gc = canvas.graphicsContext2D
 
-    override fun onBeforeShow(view: UIComponent) {
-        with(workspace.leftDrawer)
-        {
-            item("Scripts") {
-                this += ScriptList()
-                expanded = true
-            }
-            item("Watchpoints") {
-                this += WatchpointList()
-            }
-        }
-        with(workspace.bottomDrawer) {
-            item("Watchpoints") {
-                this += WatchpointView()
+        val image = WritableImage(32, 32)
+        gc.fill = Color.RED
+        gc.fillText("default", 10.0, 10.0)
+        canvas.snapshot(null, image)
 
-            }
-            item( "Exec" ) {
-                this += ExecuteView()
-            }
-        }
-
-        workspace.dock<ScriptView>()
-
+        image
     }
-}
-
-
-
-fun main(args: Array<String>) {
-    Application.launch(D3DebugApp::class.java, *args)
 }

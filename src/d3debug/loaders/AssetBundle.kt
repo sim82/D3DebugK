@@ -22,48 +22,30 @@
  *
  */
 
-package d3debug
+package d3debug.loaders
 
-import d3debug.controllers.AssetsController
-import d3debug.views.*
-import tornadofx.*
-import javafx.application.*
+import d3cp.AssetCp
+import d3debug.domain.Asset
+import org.capnproto.Serialize
+import java.io.FileInputStream
+import java.nio.channels.FileChannel
 
+class AssetBundle(val filename : String) {
+    val assets = HashSet<Asset>()
 
-//class d3debug.D3DebugApp : App(d3debug.TfxTest::class)
+    init {
+        FileInputStream(filename).channel?.use { fileChannel ->
+            val map = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,fileChannel.size())!!
 
-class D3DebugApp : App(Workspace::class) {
+            val reader = Serialize.read(map)!!
 
-    val assetController : AssetsController by inject()
-
-    override fun onBeforeShow(view: UIComponent) {
-        with(workspace.leftDrawer)
-        {
-            item("Scripts") {
-                this += ScriptList()
-                expanded = true
+            reader.getRoot(AssetCp.AssetBundle.factory)?.let { assetBundle ->
+                for ( asset in assetBundle.assets)
+                {
+                    assets.add(Asset(asset))
+                }
             }
-            item("Watchpoints") {
-                this += WatchpointList()
-            }
+
         }
-        with(workspace.bottomDrawer) {
-            item("Watchpoints") {
-                this += WatchpointView()
-
-            }
-            item( "Exec" ) {
-                this += ExecuteView()
-            }
-        }
-
-        workspace.dock<ScriptView>()
-
     }
-}
-
-
-
-fun main(args: Array<String>) {
-    Application.launch(D3DebugApp::class.java, *args)
 }

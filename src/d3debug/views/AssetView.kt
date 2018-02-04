@@ -22,48 +22,24 @@
  *
  */
 
-package d3debug
+package d3debug.views
 
 import d3debug.controllers.AssetsController
-import d3debug.views.*
+import javafx.scene.image.Image
 import tornadofx.*
-import javafx.application.*
 
+class AssetView : View() {
+    private val assetsController: AssetsController by inject()
 
-//class d3debug.D3DebugApp : App(d3debug.TfxTest::class)
+    override val root = datagrid(assetsController.assets) {
+        cellCache {
+            it.image2 = assetsController.fallbackImage
+            it.loadImageAsync()
+            imageview(it.imageProperty)
+            //it.loadImage()
+//            imageview(Image("file:///home/sim/digiKam_pictures/2004-07-19_23-56-33/dsc00006.jpg"))
+//            label(it.nameProperty)
 
-class D3DebugApp : App(Workspace::class) {
-
-    val assetController : AssetsController by inject()
-
-    override fun onBeforeShow(view: UIComponent) {
-        with(workspace.leftDrawer)
-        {
-            item("Scripts") {
-                this += ScriptList()
-                expanded = true
-            }
-            item("Watchpoints") {
-                this += WatchpointList()
-            }
         }
-        with(workspace.bottomDrawer) {
-            item("Watchpoints") {
-                this += WatchpointView()
-
-            }
-            item( "Exec" ) {
-                this += ExecuteView()
-            }
-        }
-
-        workspace.dock<ScriptView>()
-
     }
-}
-
-
-
-fun main(args: Array<String>) {
-    Application.launch(D3DebugApp::class.java, *args)
 }

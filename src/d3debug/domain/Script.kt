@@ -51,3 +51,5 @@ class Script(id: Int, name: String, sourcecode: Array<String>? = null) {
     val watchpointsProperty = SimpleSetProperty<Watchpoint>( this, "watchpoints", FXCollections.observableSet<Watchpoint>())
     var watchpoints: ObservableSet<Watchpoint> by watchpointsProperty
 }
+
+
