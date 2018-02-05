@@ -24,7 +24,6 @@
 
 package d3debug.controllers
 
-import d3debug.loaders.AssetDir
 import d3debug.domain.Asset
 import d3debug.loaders.AssetBundle
 import javafx.collections.FXCollections
@@ -36,8 +35,9 @@ import tornadofx.*
 
 class AssetsController : Controller() {
 
-//    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla_cooked")
+    //    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla_cooked")
     val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
+//    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla.bundle")
 
     val assets = FXCollections.observableArrayList<Asset>(assetDir.assets)!!
 

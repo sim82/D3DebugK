@@ -27,7 +27,6 @@ package d3debug.domain
 import d3cp.AssetCp
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
-import javafx.scene.canvas.Canvas
 import javafx.scene.image.Image
 import javafx.scene.image.PixelFormat
 import javafx.scene.image.WritableImage
@@ -59,6 +58,35 @@ class ByteBufferBackedInputStream(internal var buf: ByteBuffer) : InputStream() 
     }
 }
 
+
+inline fun swapRgba(buf: ByteArray) {
+    for (i in 0 until buf.size step 4) {
+
+        val r = buf[i]
+        val g = buf[i + 1]
+        val b = buf[i + 2]
+        val a = buf[i + 3]
+
+        buf[i] = b
+        buf[i + 1] = g
+        buf[i + 2] = r
+        buf[i + 3] = a
+    }
+}
+
+inline fun swapRgb(buf: ByteArray) {
+    for (i in 0 until buf.size step 3) {
+
+        val r = buf[i]
+        val g = buf[i + 1]
+        val b = buf[i + 2]
+
+        buf[i] = b
+        buf[i + 1] = g
+        buf[i + 2] = r
+    }
+}
+
 class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
     val uuidProperty = SimpleStringProperty(this, "uuid", reader.header.uuid.toString())
     var uuid by uuidProperty
@@ -70,7 +98,6 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
     var image2 by imageProperty
 
 
-
     private fun createImageFromReader(): Image? = when (reader.which()) {
         AssetCp.Asset.Which.PIXEL_DATA -> when (reader.pixelData.which()) {
             AssetCp.AssetPixelData.Which.STORED -> createImageFromPixelDataStored(reader.pixelData.stored)
@@ -80,47 +107,35 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
         else -> null
     }
 
-    enum class AssetPixelFormat( val v : Int, val pixelSize : Int ) {
 
-        RGBA(0, 4),
-        RGB(1, 3),
-        BGR(2, 3),
-        Luminance(3, 1),
-        Dxt1(4, 0),
-        Bc3(5, 0),
-        Undefined(666, 0)
+    enum class AssetPixelFormat(val pixelSize: Int, val byteBgraInstance: PixelFormat<ByteBuffer>?, val fixBytes: ((ByteArray) -> Unit)?) {
+        RGBA(4, PixelFormat.getByteBgraInstance(), ::swapRgba),
+        RGB(3, PixelFormat.getByteRgbInstance(), null),
+        BGR(3, PixelFormat.getByteRgbInstance(), ::swapRgb),
+        Luminance(1, null, null),
+        Dxt1(0, null, null),
+        Bc3(0, null, null),
+        Undefined(0, null, null)
     }
 
-    fun intToAssetPixelFormat( v : Int ) = when(v)
-    {
-        0 -> AssetPixelFormat.RGBA
-        1 -> AssetPixelFormat.RGB
-        2 -> AssetPixelFormat.BGR
-        3 -> AssetPixelFormat.Luminance
-        4 -> AssetPixelFormat.Dxt1
-        5 -> AssetPixelFormat.Bc3
-        else -> AssetPixelFormat.Undefined
-    }
-
-    fun toJavafxPixelformat( f : AssetPixelFormat ) = when(f)
-    {
-        AssetPixelFormat.RGBA -> PixelFormat.getByteBgraInstance()
-        AssetPixelFormat.RGB -> PixelFormat.getByteRgbInstance()
-        AssetPixelFormat.BGR -> PixelFormat.getByteRgbInstance()
-        else -> null
-    }
+    fun intToAssetPixelFormat(v: Int) = AssetPixelFormat.values()[v.coerceIn(0 until AssetPixelFormat.values().size)]
+//
+//    fun toJavafxPixelformat(f: AssetPixelFormat) = when (f) {
+//        AssetPixelFormat.RGBA -> PixelFormat.getByteBgraInstance()
+//        AssetPixelFormat.RGB -> PixelFormat.getByteRgbInstance()
+//        AssetPixelFormat.BGR -> PixelFormat.getByteRgbInstance()
+//        else -> null
+//    }
 
 
-
-    private fun createImageFromPixelDataCooked(cooked: AssetCp.AssetPixelDataCooked.Reader) : Image? {
-        if (!cooked.hasLevelData() || !cooked.hasLevels() || cooked.levels.size() < 1 )
-        {
+    private fun createImageFromPixelDataCooked(cooked: AssetCp.AssetPixelDataCooked.Reader): Image? {
+        if (!cooked.hasLevelData() || !cooked.hasLevels() || cooked.levels.size() < 1) {
             return null
         }
 
 
         val assetPixelFormat = intToAssetPixelFormat(cooked.pixelFormat)
-        toJavafxPixelformat(assetPixelFormat)?.let {
+        assetPixelFormat.byteBgraInstance?.let {
             cooked.pixelFormat
 
             val width = cooked.levels[0].width
@@ -132,6 +147,8 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
             val bytes = ByteArray(data.limit())
             data.get(bytes)
 
+            assetPixelFormat.fixBytes?.let { fix -> fix(bytes) }
+
             pixelWriter.setPixels(0, 0, width, height, it, bytes, 0, width * assetPixelFormat.pixelSize)
 
 
@@ -142,17 +159,19 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
     }
 
 
-
     private fun createImageFromPixelDataStored(pixelData: AssetCp.AssetPixelDataStored.Reader) =
             Image(ByteBufferBackedInputStream(pixelData.data.asByteBuffer()), 128.0, 128.0, true, true)
 
 
     fun loadImageAsync() {
 
+//        javafx.application.Platform.runLater {
         runAsync {
-                        Thread.sleep(300)
-//            try {
-                createImageFromReader()
+            //            Thread.sleep(1000)
+
+            //            try {
+//                val it =
+            createImageFromReader()
 //            } catch( x :IllegalArgumentException )
 //            {
 //                null
@@ -162,6 +181,7 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
                 image2 = it
             }
         }
+//        println("ret")
     }
 
 
