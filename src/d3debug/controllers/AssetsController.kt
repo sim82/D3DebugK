@@ -25,6 +25,7 @@
 package d3debug.controllers
 
 import d3debug.domain.Asset
+import d3debug.domain.AssetGroup
 import d3debug.loaders.AssetBundle
 import javafx.collections.FXCollections
 import javafx.scene.canvas.Canvas
@@ -33,6 +34,15 @@ import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import tornadofx.*
 
+fun String.prefixBefore(c: Char): String {
+    val i = indexOfLast { it == c }
+    if (i == -1) {
+        return ""
+    } else {
+        return substring(0, i)
+    }
+}
+
 class AssetsController : Controller() {
 
     //    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla_cooked")
@@ -40,6 +50,17 @@ class AssetsController : Controller() {
 //    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla.bundle")
 
     val assets = FXCollections.observableArrayList<Asset>(assetDir.assets)!!
+
+    val assetGroups = FXCollections.observableArrayList<AssetGroup>()!!
+
+    init {
+        val groups = assets.asSequence().map { it.name.prefixBefore('/') }.filter { !it.isEmpty() }.sorted().distinct()
+
+        for (g in groups) {
+            println("group: $g")
+        }
+    }
+
 
     val fallbackImage: Image by lazy {
         val canvas = Canvas(32.0, 32.0)

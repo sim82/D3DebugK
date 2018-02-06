@@ -52,38 +52,53 @@ class ByteBufferBackedInputStream(internal var buf: ByteBuffer) : InputStream() 
             return -1
         }
 
-        val len = Math.min(len, buf.remaining())
-        buf.get(bytes, off, len)
-        return len
+        val minLen = Math.min(len, buf.remaining())
+        buf.get(bytes, off, minLen)
+        return minLen
     }
 }
 
 
-inline fun swapRgba(buf: ByteArray) {
+//inline fun ByteArray.swapSubrange(width: Int, step: Int) {
+//    for (i in 0 until size step step) {
+//        for (j in 0 until width / 2) {
+//            swapAt(i + j, i + width - j - 1)
+//        }
+//    }
+//}
+
+fun swapRgba(buf: ByteArray) {
+
     for (i in 0 until buf.size step 4) {
-
         val r = buf[i]
-        val g = buf[i + 1]
         val b = buf[i + 2]
-        val a = buf[i + 3]
 
         buf[i] = b
-        buf[i + 1] = g
         buf[i + 2] = r
-        buf[i + 3] = a
     }
 }
 
-inline fun swapRgb(buf: ByteArray) {
+fun swapRgb(buf: ByteArray) {
     for (i in 0 until buf.size step 3) {
-
         val r = buf[i]
-        val g = buf[i + 1]
         val b = buf[i + 2]
 
         buf[i] = b
-        buf[i + 1] = g
         buf[i + 2] = r
+    }
+}
+
+fun ByteArray.swapAt(i1: Int, i2: Int) {
+    val tmp = this[i1]
+    this[i1] = this[i2]
+    this[i2] = tmp
+}
+
+fun ByteArray.flipScanlines(stride: Int) {
+    for (y in 0 until size / 2 step stride) {
+        for (x in 0 until stride) {
+            swapAt(y + x, size - stride - y + x)
+        }
     }
 }
 
@@ -147,7 +162,8 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
             val bytes = ByteArray(data.limit())
             data.get(bytes)
 
-            assetPixelFormat.fixBytes?.let { fix -> fix(bytes) }
+            assetPixelFormat.fixBytes?.invoke(bytes)
+            bytes.flipScanlines(width * assetPixelFormat.pixelSize)
 
             pixelWriter.setPixels(0, 0, width, height, it, bytes, 0, width * assetPixelFormat.pixelSize)
 
@@ -198,4 +214,9 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
 //            return img
 //            //return Image()
 //        }
+}
+
+
+class AssetGroup(val name: String, val parent: AssetGroup? = null) {
+
 }
