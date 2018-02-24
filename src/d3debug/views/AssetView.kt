@@ -25,31 +25,25 @@
 package d3debug.views
 
 import d3debug.controllers.AssetsController
-import d3debug.domain.AssetGroup
-import javafx.scene.image.Image
+import d3debug.viewmodels.AssetGroupModel
 import tornadofx.*
 
 class AssetView : View() {
     private val assetsController: AssetsController by inject()
+    private val assetGroupModel: AssetGroupModel by inject()
 
     override val root = hbox {
-        treeview<AssetGroup> {
-
-        }
-        datagrid(assetsController.assets) {
-            cellCache {
-                it.image2 = assetsController.fallbackImage
-                it.loadImageAsync()
-                imageview(it.imageProperty) {
-
-                    fitWidth = 128.0
-                    fitHeight = 128.0
-                }
-                //it.loadImage()
-                //            imageview(Image("file:///home/sim/digiKam_pictures/2004-07-19_23-56-33/dsc00006.jpg"))
-                //            label(it.nameProperty)
-
+        //        treeview<AssetGroup> {
+//
+//        }
+        listview(assetsController.assetGroups)
+        {
+            cellFormat {
+                text = it.name
             }
+            bindSelected(assetGroupModel)
         }
+        add(find(AssetGroupFragment::class))
+
     }
 }

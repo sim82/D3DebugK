@@ -33,6 +33,7 @@ import javafx.scene.image.WritableImage
 import tornadofx.*
 import java.io.InputStream
 import java.nio.ByteBuffer
+import javax.json.Json
 
 
 class ByteBufferBackedInputStream(internal var buf: ByteBuffer) : InputStream() {
@@ -101,25 +102,31 @@ fun ByteArray.flipScanlines(stride: Int) {
         }
     }
 }
-
-class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
-    val uuidProperty = SimpleStringProperty(this, "uuid", reader.header.uuid.toString())
+typealias AssetReaderFactory = () -> d3cp.AssetCp.Asset.Reader
+//class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
+class Asset( val readerFactory : AssetReaderFactory, uuid: String, name: String ) {
+    val uuidProperty = SimpleStringProperty(this, "uuid", uuid)
     var uuid by uuidProperty
 
-    val nameProperty = SimpleStringProperty(this, "name", reader.header.name.toString())
+    val nameProperty = SimpleStringProperty(this, "name", name)
     var name by nameProperty
 
     val imageProperty = SimpleObjectProperty<Image>(this, "image", null)
     var image2 by imageProperty
 
+    var imageLoaded = false
 
-    private fun createImageFromReader(): Image? = when (reader.which()) {
-        AssetCp.Asset.Which.PIXEL_DATA -> when (reader.pixelData.which()) {
-            AssetCp.AssetPixelData.Which.STORED -> createImageFromPixelDataStored(reader.pixelData.stored)
-            AssetCp.AssetPixelData.Which.COOKED -> createImageFromPixelDataCooked(reader.pixelData.cooked)
+
+    private fun createImageFromReader(): Image? {
+        val reader = readerFactory()
+        return when (reader.which()) {
+            AssetCp.Asset.Which.PIXEL_DATA -> when (reader.pixelData.which()) {
+                AssetCp.AssetPixelData.Which.STORED -> createImageFromPixelDataStored(reader.pixelData.stored)
+                AssetCp.AssetPixelData.Which.COOKED -> createImageFromPixelDataCooked(reader.pixelData.cooked)
+                else -> null
+            }
             else -> null
         }
-        else -> null
     }
 
 
@@ -180,6 +187,10 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
 
 
     fun loadImageAsync() {
+        if (imageLoaded)
+        {
+            return
+        }
 
 //        javafx.application.Platform.runLater {
         runAsync {
@@ -195,6 +206,7 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
         } ui {
             if (it != null) {
                 image2 = it
+                imageLoaded = true
             }
         }
 //        println("ret")
@@ -217,6 +229,3 @@ class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
 }
 
 
-class AssetGroup(val name: String, val parent: AssetGroup? = null) {
-
-}

@@ -44,7 +44,7 @@ class AssetBundle(val filename : String) {
             reader.getRoot(AssetCp.AssetBundle.factory)?.let { assetBundle ->
                 for ( asset in assetBundle.assets)
                 {
-                    assets.add(Asset(asset))
+                    assets.add(Asset( { asset!! }, asset.header.uuid.toString(), asset.header.name.toString()))
                 }
             }
 

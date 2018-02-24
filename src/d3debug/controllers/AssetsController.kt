@@ -27,6 +27,9 @@ package d3debug.controllers
 import d3debug.domain.Asset
 import d3debug.domain.AssetGroup
 import d3debug.loaders.AssetBundle
+import d3debug.loaders.AssetDir
+import d3debug.viewmodels.AssetGroupModel
+import javafx.beans.property.DoubleProperty
 import javafx.collections.FXCollections
 import javafx.scene.canvas.Canvas
 import javafx.scene.image.Image
@@ -45,19 +48,33 @@ fun String.prefixBefore(c: Char): String {
 
 class AssetsController : Controller() {
 
-    //    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla_cooked")
-    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
-//    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla.bundle")
+    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla")
+//    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
+    val scene = AssetDir("/home/sim/tmp/shadermesh_assets")
 
-    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets)!!
+    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets + scene.assets)!!
 
     val assetGroups = FXCollections.observableArrayList<AssetGroup>()!!
+
+    var iconSizeProperty: DoubleProperty? = null
+
+    val assetGroupModel: AssetGroupModel by inject()
 
     init {
         val groups = assets.asSequence().map { it.name.prefixBefore('/') }.filter { !it.isEmpty() }.sorted().distinct()
 
         for (g in groups) {
+            val group = AssetGroup(g)
+
+            group.assets.addAll(assets.asSequence().filter { it.name.startsWith(g) })
+
+            assetGroups += group
+
             println("group: $g")
+        }
+
+        assetGroupModel.selectedAssets.onChange {
+            println("selected ${it?.name}")
         }
     }
 

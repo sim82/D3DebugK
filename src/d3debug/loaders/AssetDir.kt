@@ -27,7 +27,6 @@ package d3debug.loaders
 import d3debug.domain.Asset
 import org.capnproto.Serialize
 import java.io.File
-import java.io.FileOutputStream
 import java.nio.channels.FileChannel
 
 class AssetDir(val rootPath: String) {
@@ -40,9 +39,8 @@ class AssetDir(val rootPath: String) {
             uidRegex.matches(name)
         }!!
 
-        for ( file in files)
-        {
-            println( "file: ${file.toString()}")
+        for (file in files) {
+            println("file: ${file.toString()}")
 
             FileChannel.open(file.toPath()).use { fileChannel ->
 
@@ -52,21 +50,11 @@ class AssetDir(val rootPath: String) {
                 val assetReader = reader.getRoot(d3cp.AssetCp.Asset.factory)!!
 
                 val header = assetReader.header!!
-                println( "header: ${header.name} ${header.uuid}")
+                println("header: ${header.name} ${header.uuid}")
 
-                if (assetReader.isPixelData())
-                {
-                    val pixelDataReader = assetReader.pixelData!!
-                    println( "pixelData: ${if(pixelDataReader.isCooked())  "cooked" else "stored"}")
-                    assets += Asset(assetReader)
+                // TODO: read uuid & name from index and create asset reader on demand
+                assets += Asset( {assetReader}, assetReader.header.uuid.toString(), assetReader.header.name.toString())
 
-//                    if (pixelDataReader.isStored()) {
-//
-//                        FileOutputStream("/tmp/asset/${header.uuid}").channel?.use {
-//                            it.write(pixelDataReader.stored.data.asByteBuffer())
-//                        }
-//                    }
-                }
             }
         }
 //        for (val file in rootDir.listFiles()) {
