@@ -38,8 +38,8 @@ class ScriptsController : Controller() {
 
     val watchpoints = FXCollections.observableArrayList<Watchpoint>()!!
 
-    val scriptModel : ScriptModel by inject()
-    val watchpointModel : WatchpointModel by inject()
+    val scriptModel: ScriptModel by inject()
+    val watchpointModel: WatchpointModel by inject()
 
     init {
         debugConnection.scriptInfoRequest {
@@ -50,14 +50,13 @@ class ScriptsController : Controller() {
             }
         }
 
-        debugConnection.subscribeEventWatchpoint {
-            wpId, scriptId, line, localNames ->
+        debugConnection.subscribeEventWatchpoint { wpId, _, _, localNames ->
 
             watchpoints.find {
                 it.id == wpId
             }?.apply {
-                addTrace( localNames )
-            }
+                        addTrace(localNames)
+                    }
         }
 
         scriptModel.id.onChange {
@@ -79,16 +78,12 @@ class ScriptsController : Controller() {
         }
     }
 
-    fun addWatchpoint(id: Int, line: Int, op : (Watchpoint) -> Unit ) {
-        val wp = Watchpoint(id, line)
-
-        debugConnection.addBreakpoint(id,  line) { wpId ->
-
-            val wp = Watchpoint(id, line, wpId)
-            watchpoints.add(wp)
-            op(wp)
-        }
-    }
+    fun addWatchpoint(id: Int, line: Int, op: (Watchpoint) -> Unit) =
+            debugConnection.addBreakpoint(id, line) { wpId ->
+                val wp = Watchpoint(id, line, wpId)
+                watchpoints.add(wp)
+                op(wp)
+            }
 }
 
 

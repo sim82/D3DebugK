@@ -28,6 +28,7 @@ import d3debug.domain.Asset
 import d3debug.domain.AssetGroup
 import d3debug.loaders.AssetBundle
 import d3debug.loaders.AssetDir
+import d3debug.loaders.loaderFor
 import d3debug.viewmodels.AssetGroupModel
 import javafx.beans.property.DoubleProperty
 import javafx.collections.FXCollections
@@ -48,11 +49,11 @@ fun String.prefixBefore(c: Char): String {
 
 class AssetsController : Controller() {
 
-    val assetDir = AssetDir("/home/sim/src_3dyne/dd_081131_exec/bla")
+    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
 //    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
-    val scene = AssetDir("/home/sim/tmp/shadermesh_assets")
+    val scene = loaderFor("/home/sim/tmp/shadermesh_assets")
 
-    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets + scene.assets)!!
+//    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets.asIterable() + scene.assets.asIterable())!!
 
     val assetGroups = FXCollections.observableArrayList<AssetGroup>()!!
 
@@ -61,18 +62,14 @@ class AssetsController : Controller() {
     val assetGroupModel: AssetGroupModel by inject()
 
     init {
-        val groups = assets.asSequence().map { it.name.prefixBefore('/') }.filter { !it.isEmpty() }.sorted().distinct()
 
-        for (g in groups) {
-            val group = AssetGroup(g)
+        val grouped = sequenceOf(assetDir.assets, scene.assets).flatten().groupBy {it.name.prefixBefore('/')}
 
-            group.assets.addAll(assets.asSequence().filter { it.name.startsWith(g) })
-
+        for ( ( groupName, list) in grouped ) {
+            val group = AssetGroup(groupName)
+            group.assets.addAll(list)
             assetGroups += group
-
-            println("group: $g")
         }
-
         assetGroupModel.selectedAssets.onChange {
             println("selected ${it?.name}")
         }

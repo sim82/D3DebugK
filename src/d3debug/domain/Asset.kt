@@ -25,6 +25,7 @@
 package d3debug.domain
 
 import d3cp.AssetCp
+import d3debug.loaders.AssetReaderFactory
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.image.Image
@@ -33,7 +34,6 @@ import javafx.scene.image.WritableImage
 import tornadofx.*
 import java.io.InputStream
 import java.nio.ByteBuffer
-import javax.json.Json
 
 
 class ByteBufferBackedInputStream(internal var buf: ByteBuffer) : InputStream() {
@@ -102,13 +102,11 @@ fun ByteArray.flipScanlines(stride: Int) {
         }
     }
 }
-typealias AssetReaderFactory = () -> d3cp.AssetCp.Asset.Reader
-//class Asset(val reader: d3cp.AssetCp.Asset.Reader) {
-class Asset( val readerFactory : AssetReaderFactory, uuid: String, name: String ) {
-    val uuidProperty = SimpleStringProperty(this, "uuid", uuid)
+class Asset( val factory : AssetReaderFactory) {
+    val uuidProperty = SimpleStringProperty(this, "uuid", factory.uuid)
     var uuid by uuidProperty
 
-    val nameProperty = SimpleStringProperty(this, "name", name)
+    val nameProperty = SimpleStringProperty(this, "name", factory.name)
     var name by nameProperty
 
     val imageProperty = SimpleObjectProperty<Image>(this, "image", null)
@@ -118,7 +116,7 @@ class Asset( val readerFactory : AssetReaderFactory, uuid: String, name: String 
 
 
     private fun createImageFromReader(): Image? {
-        val reader = readerFactory()
+        val reader = factory.reader
         return when (reader.which()) {
             AssetCp.Asset.Which.PIXEL_DATA -> when (reader.pixelData.which()) {
                 AssetCp.AssetPixelData.Which.STORED -> createImageFromPixelDataStored(reader.pixelData.stored)

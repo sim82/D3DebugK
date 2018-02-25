@@ -22,34 +22,12 @@
  *
  */
 
-package d3debug.viewmodels
+package d3debug.loaders
 
-import d3debug.controllers.ScriptsController
-import d3debug.domain.Script
-import tornadofx.*
+import d3cp.AssetCp
 
-class ScriptModel : ItemViewModel<Script>() {
-    val id = bind(Script::idProperty)
-    val name = bind(Script::nameProperty)
-    val sourcecode = bind(Script::sourcecodeProperty)
-    val sourcecode2 = bind(Script::sourcecode2Property)
-    val watchpoints = bind(Script::watchpointsProperty)
-
-    val controller : ScriptsController by inject()
-
-    fun addWatchpoint( scriptPos : Int )
-    {
-        val substr = sourcecode.value.substring(0, scriptPos)
-
-        // translate caret position -> line
-        val line = substr.count {
-            it == '\n'
-        }
-
-        controller.addWatchpoint(id.value.toInt(), line) {
-            watchpoints.value.add(it);
-        }
-    }
+interface AssetReaderFactory {
+    val name: String
+    val uuid: String
+    val reader: AssetCp.Asset.Reader
 }
-
-

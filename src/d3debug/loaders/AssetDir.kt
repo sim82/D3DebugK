@@ -29,36 +29,36 @@ import org.capnproto.Serialize
 import java.io.File
 import java.nio.channels.FileChannel
 
-class AssetDir(val rootPath: String) {
-    val assets = HashSet<Asset>()
+internal class AssetDir(val rootPath: String) : AssetLoader {
+    val rootDir = File(rootPath)
 
-    init {
+    private val indexReader by lazy {
         val rootDir = File(rootPath)
-        val uidRegex = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-        val files = rootDir.listFiles { dir, name ->
-            uidRegex.matches(name)
-        }!!
+        val indexFile = File(rootDir, "index")
 
-        for (file in files) {
-            println("file: ${file.toString()}")
-
-            FileChannel.open(file.toPath()).use { fileChannel ->
-
-                val mappedBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())!!
-                val reader = Serialize.read(mappedBuffer)!!
-
-                val assetReader = reader.getRoot(d3cp.AssetCp.Asset.factory)!!
-
-                val header = assetReader.header!!
-                println("header: ${header.name} ${header.uuid}")
-
-                // TODO: read uuid & name from index and create asset reader on demand
-                assets += Asset( {assetReader}, assetReader.header.uuid.toString(), assetReader.header.name.toString())
-
-            }
+        if (!(indexFile.isFile && indexFile.canRead())) {
+            throw RuntimeException("cannot read index file ${indexFile.toURI()}")
         }
-//        for (val file in rootDir.listFiles()) {
-//            rootDir.listFiles()
-//        }
+        indexFile.inputStream().channel.use { indexFileChannel ->
+            val mappedBuffer = indexFileChannel.map(FileChannel.MapMode.READ_ONLY, 0, indexFileChannel.size())
+            Serialize.read(mappedBuffer)?.getRoot(d3cp.AssetCp.AssetIndex.factory)!!
+
+        }
     }
+
+    override val assets: Sequence<Asset>
+        get() = Sequence({ indexReader.headers.iterator() }).map {
+            val uuid = it.uuid.toString()
+            val assetFile = File(rootDir, uuid)
+
+            object : AssetReaderFactory {
+                override val name: String = it.name.toString()
+                override val uuid: String = uuid
+                override val reader: d3cp.AssetCp.Asset.Reader
+                    get() = assetFile.inputStream().channel.use { assetFileChannel ->
+                        val assetMappedBuffer = assetFileChannel.map(FileChannel.MapMode.READ_ONLY, 0, assetFileChannel.size())
+                        Serialize.read(assetMappedBuffer).getRoot(d3cp.AssetCp.Asset.factory)!!
+                    }
+            }
+        }.map { Asset(it) }
 }

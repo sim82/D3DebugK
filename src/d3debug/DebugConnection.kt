@@ -181,8 +181,6 @@ constructor() {
 
             val debugReply = messageReader.getRoot(Game.DebugReply.factory) ?: return
 
-            val which = debugReply.which()
-
             when (debugReply.which()) {
                 Game.DebugReply.Which.SCRIPT_INFO -> handleScriptInfoReply(debugReply)
                 Game.DebugReply.Which.SCRIPT_GET -> handleScriptGet(debugReply)
@@ -235,7 +233,6 @@ constructor() {
 
         val m = HashMap<Int, String>()
 
-        val size = scriptInfo.size()
         for (info in scriptInfo) {
             val id = info.id
             val name = info.sourceName

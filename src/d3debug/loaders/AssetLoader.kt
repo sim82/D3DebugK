@@ -24,42 +24,24 @@
 
 package d3debug.loaders
 
-import d3cp.AssetCp
 import d3debug.domain.Asset
-import org.capnproto.ReaderOptions
-import org.capnproto.Serialize
-import java.io.FileInputStream
-import java.nio.channels.FileChannel
+import java.io.File
 
-internal class AssetBundle(val filename : String) : AssetLoader {
+interface AssetLoader {
+    val assets: Sequence<Asset>
+}
 
-    private val assetSet = hashSetOf<Asset>()
-    override val assets: Sequence<Asset>
-        get() = assetSet.asSequence()
+fun loaderFor(source: String): AssetLoader {
+    val file = File(source)
 
-    init {
-        FileInputStream(filename).channel?.use { fileChannel ->
-            val map = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,fileChannel.size())!!
+    // detect asset loader type
+    return when {
+    // file with extension ".bundle"
+        file.isFile && file.canRead() && file.extension == ".bundle" -> AssetBundle(source)
 
+    // directory that contains "index" file
+        file.isDirectory && File(file, "index").let { it.isFile && it.canRead() } -> AssetDir(source)
 
-            val reader = Serialize.read(map, ReaderOptions(1024*1024*1024, 64))!!
-
-            reader.getRoot(AssetCp.AssetBundle.factory)?.let { assetBundle ->
-                for ( asset in assetBundle.assets)
-                {
-                    assetSet.add(Asset( object : AssetReaderFactory {
-                        override val name: String
-                            get() = asset.header.name.toString()
-
-                        override val uuid: String
-                            get() = asset.header.uuid.toString()
-
-                        override val reader: AssetCp.Asset.Reader
-                            get() = asset
-                    }))
-                }
-            }
-
-        }
+        else -> throw RuntimeException( "cannot determine asset loader type for $source" )
     }
 }
