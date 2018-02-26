@@ -37,11 +37,14 @@ fun loaderFor(source: String): AssetLoader {
     // detect asset loader type
     return when {
     // file with extension ".bundle"
-        file.isFile && file.canRead() && file.extension == ".bundle" -> AssetBundle(source)
+        file.isFile && file.canRead() && file.extension == "bundle" -> AssetBundle(source)
 
     // directory that contains "index" file
         file.isDirectory && File(file, "index").let { it.isFile && it.canRead() } -> AssetDir(source)
 
-        else -> throw RuntimeException( "cannot determine asset loader type for $source" )
+    // framed asset bundle
+        file.isFile && file.canRead() && file.extension == "fab" -> FramedAssetBundle(source)
+
+        else -> throw RuntimeException("cannot determine asset loader type for $source")
     }
 }

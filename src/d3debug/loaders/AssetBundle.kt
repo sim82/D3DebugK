@@ -31,35 +31,22 @@ import org.capnproto.Serialize
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
 
-internal class AssetBundle(val filename : String) : AssetLoader {
+internal class AssetBundle(val filename: String) : AssetLoader {
 
-    private val assetSet = hashSetOf<Asset>()
-    override val assets: Sequence<Asset>
-        get() = assetSet.asSequence()
+    override val assets by lazy {
+        FileInputStream(filename).channel.use { fileChannel ->
+            val map = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())!!
+            val reader = Serialize.read(map, ReaderOptions(1024 * 1024 * 1024, 64))!!
 
-    init {
-        FileInputStream(filename).channel?.use { fileChannel ->
-            val map = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,fileChannel.size())!!
-
-
-            val reader = Serialize.read(map, ReaderOptions(1024*1024*1024, 64))!!
-
-            reader.getRoot(AssetCp.AssetBundle.factory)?.let { assetBundle ->
-                for ( asset in assetBundle.assets)
-                {
-                    assetSet.add(Asset( object : AssetReaderFactory {
-                        override val name: String
-                            get() = asset.header.name.toString()
-
-                        override val uuid: String
-                            get() = asset.header.uuid.toString()
-
-                        override val reader: AssetCp.Asset.Reader
-                            get() = asset
-                    }))
-                }
+            reader.getRoot(AssetCp.AssetBundle.factory).assets.asSequence().map { asset ->
+                Asset(object : AssetReaderFactory {
+                    override val name = asset.header.name.toString()
+                    override val uuid = asset.header.uuid.toString()
+                    override val reader = asset
+                })
             }
-
         }
     }
 }
+
+

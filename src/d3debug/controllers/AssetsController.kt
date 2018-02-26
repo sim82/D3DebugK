@@ -49,8 +49,9 @@ fun String.prefixBefore(c: Char): String {
 
 class AssetsController : Controller() {
 
-    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
-//    val assetDir = AssetBundle("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
+//    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
+//    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
+    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/out.fab")
     val scene = loaderFor("/home/sim/tmp/shadermesh_assets")
 
 //    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets.asIterable() + scene.assets.asIterable())!!
