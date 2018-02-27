@@ -70,6 +70,11 @@ class AssetsController : Controller() {
             val group = AssetGroup(groupName)
             group.assets.addAll(list)
             assetGroups += group
+
+            for ( asset in group.assets )
+            {
+                println( "${asset.name} ${asset.uuid}")
+            }
         }
         assetGroupModel.selectedAssets.onChange {
             println("selected ${it?.name}")

@@ -26,10 +26,27 @@ package d3debug.loaders
 
 import d3cp.AssetCp
 import d3debug.domain.Asset
+import net.jpountz.lz4.LZ4Factory
 import org.capnproto.Serialize
 import org.capnproto.Text
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.util.*
+
+object ConvertLongToUuid {
+    val bb = ByteBuffer.allocate(16)
+
+    fun convert(idLow: Long, idHigh: Long): UUID {
+        bb.order(ByteOrder.LITTLE_ENDIAN)
+        bb.putLong(0, idHigh)
+        bb.putLong(8, idLow)
+        bb.order(ByteOrder.BIG_ENDIAN)
+
+        return UUID(bb.getLong(8), bb.getLong(0))
+    }
+}
 
 internal class FramedAssetBundle(val filename: String) : AssetLoader {
     val file = File(filename)
@@ -38,9 +55,10 @@ internal class FramedAssetBundle(val filename: String) : AssetLoader {
     val nameIndex: AssetCp.FramedAssetBundle.NameIndex.Reader
     val offsetTable: AssetCp.FramedAssetBundle.OffsetTable.Reader
 
-    override val assets: Sequence<Asset>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    val assetSet = hashSetOf<Asset>()
 
+    override val assets: Sequence<Asset>
+        get() = assetSet.asSequence()
 
     init {
 
@@ -64,15 +82,44 @@ internal class FramedAssetBundle(val filename: String) : AssetLoader {
 
         for (i in 0 until idIndex.index.size()) {
             idPairs.add(Pair(idIndex.index[i], idIndex.sortedIds[i]))
-            namePairs.add(Pair(idIndex.index[i], nameIndex.sortedNames[i]))
+            namePairs.add(Pair(nameIndex.index[i], nameIndex.sortedNames[i]))
         }
 
         idPairs.sortBy { it.first }
         namePairs.sortBy { it.first }
         val nameIds = idPairs.map { it.second }.zip(namePairs.map { it.second })
 
-        for ((id, name) in nameIds) {
-            println( "${id.idHigh} ${id.idLow} $name")
+
+        for ((i, p) in nameIds.withIndex()) {
+            val (id, name) = p
+
+            val uuid = ConvertLongToUuid.convert(id.idLow, id.idHigh)
+
+            println("${id.idHigh} ${id.idLow} $name $uuid")
+
+
+            val offset = offsetTable.offsets[i]
+            val size = offsetTable.sizes[i]
+            val usize = offsetTable.uncompressedSizes[i]
+            val factory = LZ4Factory.fastestInstance()
+
+
+            val buf = ByteBuffer.allocate(size.toInt())
+            file.inputStream().channel.read(buf, offset)
+            buf.rewind()
+
+            val ubuf = ByteBuffer.allocate(usize.toInt())
+            factory.fastDecompressor().decompress(buf, ubuf)
+
+            ubuf.rewind()
+            val reader = Serialize.read(ubuf).getRoot(AssetCp.Asset.factory)
+
+            assetSet.add( Asset(object : AssetReaderFactory {
+                override val name = name.toString()
+                override val uuid = id.toString()
+                override val reader: AssetCp.Asset.Reader
+                    get() = reader
+            }))
         }
     }
 }
