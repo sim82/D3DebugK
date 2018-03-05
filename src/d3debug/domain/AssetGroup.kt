@@ -22,31 +22,21 @@
  *
  */
 
-package d3debug.loaders
+package d3debug.domain
 
-import d3cp.AssetCp
-import d3debug.domain.Asset
-import org.capnproto.ReaderOptions
-import org.capnproto.Serialize
-import java.io.FileInputStream
-import java.nio.channels.FileChannel
+import javafx.beans.property.SimpleListProperty
+import javafx.beans.property.SimpleObjectProperty
+import javafx.collections.FXCollections
+import tornadofx.*
 
-internal class AssetBundle(val filename: String) : AssetLoader {
+class AssetGroup(val name: String, val parent: AssetGroup? = null) {
+    val assetsProperty = SimpleListProperty<Asset>(this, "assetSet", FXCollections.observableArrayList<Asset>())
+    var assets by assetsProperty
 
-    override val assets by lazy {
-        FileInputStream(filename).channel.use { fileChannel ->
-            val map = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())!!
-            val reader = Serialize.read(map, ReaderOptions(1024 * 1024 * 1024, 64))!!
+    val selectedAssetsProperty = SimpleObjectProperty<Asset?>( this, "selectedAssets", null)
+    var selectedAssets by selectedAssetsProperty
 
-            reader.getRoot(AssetCp.AssetBundle.factory).assets.asSequence().map { asset ->
-                object : AssetReaderFactory {
-                    override val name = asset.header.name.toString()
-                    override val uuid = asset.header.uuid.toString()
-                    override val reader = asset
-                } as AssetReaderFactory
-            }
-        }
-    }
+//    val selectedAssetsProperty = SimpleListProperty<Asset>( this, "selectedAssets", FXCollections.observableArrayList<Asset>())
+//    var selectedAssets by selectedAssetsProperty
+
 }
-
-

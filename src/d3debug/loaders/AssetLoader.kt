@@ -28,7 +28,7 @@ import d3debug.domain.Asset
 import java.io.File
 
 interface AssetLoader {
-    val assets: Sequence<Asset>
+    val assets: Sequence<AssetReaderFactory>
 }
 
 fun loaderFor(source: String): AssetLoader {

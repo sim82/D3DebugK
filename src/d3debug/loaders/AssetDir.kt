@@ -24,7 +24,6 @@
 
 package d3debug.loaders
 
-import d3debug.domain.Asset
 import org.capnproto.Serialize
 import java.io.File
 import java.nio.channels.FileChannel
@@ -46,13 +45,13 @@ internal class AssetDir(val rootPath: String) : AssetLoader {
         }
     }
 
-    override val assets: Sequence<Asset>
+    override val assets: Sequence<AssetReaderFactory>
         get() = Sequence({ indexReader.headers.iterator() }).map {
             val uuid = it.uuid.toString()
             val assetFile = File(rootDir, uuid)
 
             object : AssetReaderFactory {
-                override val name: String = it.name.toString()
+                override val name: String get() = it.name.toString()
                 override val uuid: String = uuid
                 override val reader: d3cp.AssetCp.Asset.Reader
                     get() = assetFile.inputStream().channel.use { assetFileChannel ->
@@ -60,5 +59,5 @@ internal class AssetDir(val rootPath: String) : AssetLoader {
                         Serialize.read(assetMappedBuffer).getRoot(d3cp.AssetCp.Asset.factory)!!
                     }
             }
-        }.map { Asset(it) }
+        }
 }

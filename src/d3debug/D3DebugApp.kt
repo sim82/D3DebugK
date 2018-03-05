@@ -26,17 +26,18 @@ package d3debug
 
 import d3debug.controllers.AssetsController
 import d3debug.views.*
+import javafx.application.Application
 import tornadofx.*
-import javafx.application.*
 
 
 //class d3debug.D3DebugApp : App(d3debug.TfxTest::class)
 
 class D3DebugApp : App(Workspace::class) {
 
-    val assetController : AssetsController by inject()
+    val assetController: AssetsController by inject()
 
     override fun onBeforeShow(view: UIComponent) {
+        Thread.setDefaultUncaughtExceptionHandler(null)
         with(workspace.leftDrawer)
         {
             item("Scripts") {
@@ -52,7 +53,7 @@ class D3DebugApp : App(Workspace::class) {
                 this += WatchpointView()
 
             }
-            item( "Exec" ) {
+            item("Exec") {
                 this += ExecuteView()
             }
         }
@@ -63,7 +64,7 @@ class D3DebugApp : App(Workspace::class) {
 }
 
 
-
 fun main(args: Array<String>) {
+
     Application.launch(D3DebugApp::class.java, *args)
 }

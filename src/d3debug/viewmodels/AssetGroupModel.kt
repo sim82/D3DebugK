@@ -22,31 +22,12 @@
  *
  */
 
-package d3debug.loaders
+package d3debug.viewmodels
 
-import d3cp.AssetCp
-import d3debug.domain.Asset
-import org.capnproto.ReaderOptions
-import org.capnproto.Serialize
-import java.io.FileInputStream
-import java.nio.channels.FileChannel
+import d3debug.domain.AssetGroup
+import tornadofx.*
 
-internal class AssetBundle(val filename: String) : AssetLoader {
-
-    override val assets by lazy {
-        FileInputStream(filename).channel.use { fileChannel ->
-            val map = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())!!
-            val reader = Serialize.read(map, ReaderOptions(1024 * 1024 * 1024, 64))!!
-
-            reader.getRoot(AssetCp.AssetBundle.factory).assets.asSequence().map { asset ->
-                object : AssetReaderFactory {
-                    override val name = asset.header.name.toString()
-                    override val uuid = asset.header.uuid.toString()
-                    override val reader = asset
-                } as AssetReaderFactory
-            }
-        }
-    }
+class AssetGroupModel : ItemViewModel<AssetGroup>() {
+    val assets  = bind(AssetGroup::assets)
+    val selectedAssets = bind(AssetGroup::selectedAssets)
 }
-
-

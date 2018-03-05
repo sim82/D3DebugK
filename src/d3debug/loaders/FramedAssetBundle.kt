@@ -25,7 +25,6 @@
 package d3debug.loaders
 
 import d3cp.AssetCp
-import d3debug.domain.Asset
 import net.jpountz.lz4.LZ4Factory
 import org.capnproto.Serialize
 import org.capnproto.Text
@@ -49,33 +48,25 @@ object ConvertLongToUuid {
 }
 
 internal class FramedAssetBundle(val filename: String) : AssetLoader {
-    val file = File(filename)
+    private val lz4Factory = LZ4Factory.fastestInstance()
 
-    val idIndex: AssetCp.FramedAssetBundle.IdIndex.Reader
-    val nameIndex: AssetCp.FramedAssetBundle.NameIndex.Reader
-    val offsetTable: AssetCp.FramedAssetBundle.OffsetTable.Reader
+    private val file = File(filename)
+    private val inputChannel = file.inputStream().channel
 
-    val assetSet = hashSetOf<Asset>()
+    private val indexSection by lazy {
+        val headerSection = Serialize.read(inputChannel).getRoot(AssetCp.FramedAssetBundle.HeaderSection.factory)
 
-    override val assets: Sequence<Asset>
-        get() = assetSet.asSequence()
-
-    init {
-
-        val indexSection = file.inputStream().channel.use { channel ->
-            val headerSection = Serialize.read(channel).getRoot(AssetCp.FramedAssetBundle.HeaderSection.factory)
-
-            if (headerSection.magick != 0x1234567812345678) {
-                throw RuntimeException("bad headerSection.magick")
-            }
-
-            val indexMapping = channel.map(FileChannel.MapMode.READ_ONLY, headerSection.indexSectionOffset, headerSection.indexSectionSize)
-            Serialize.read(indexMapping).getRoot(AssetCp.FramedAssetBundle.IndexSection.factory)
+        if (headerSection.magick != 0x1234567812345678) {
+            throw RuntimeException("bad headerSection.magick")
         }
-        idIndex = indexSection.idIndex
-        nameIndex = indexSection.nameIndex
-        offsetTable = indexSection.offsetTable
 
+        val indexMapping = inputChannel.map(FileChannel.MapMode.READ_ONLY, headerSection.indexSectionOffset, headerSection.indexSectionSize)
+        Serialize.read(indexMapping).getRoot(AssetCp.FramedAssetBundle.IndexSection.factory)!!
+    }
+
+    private val nameIdPairs: List<Pair<AssetCp.FramedAssetBundle.IdIndex.Uuid.Reader, Text.Reader>> by lazy {
+        val idIndex: AssetCp.FramedAssetBundle.IdIndex.Reader = indexSection.idIndex
+        val nameIndex: AssetCp.FramedAssetBundle.NameIndex.Reader = indexSection.nameIndex
 
         val idPairs = arrayListOf<Pair<Long, AssetCp.FramedAssetBundle.IdIndex.Uuid.Reader>>()
         val namePairs = arrayListOf<Pair<Long, Text.Reader>>()
@@ -87,39 +78,40 @@ internal class FramedAssetBundle(val filename: String) : AssetLoader {
 
         idPairs.sortBy { it.first }
         namePairs.sortBy { it.first }
-        val nameIds = idPairs.map { it.second }.zip(namePairs.map { it.second })
+        idPairs.map { it.second }.zip(namePairs.map { it.second })
+    }
 
 
-        for ((i, p) in nameIds.withIndex()) {
+    override val assets: Sequence<AssetReaderFactory>
+        get() = nameIdPairs.asSequence().withIndex().map { (i, p) ->
             val (id, name) = p
 
             val uuid = ConvertLongToUuid.convert(id.idLow, id.idHigh)
 
-            println("${id.idHigh} ${id.idLow} $name $uuid")
+//            println("${id.idHigh} ${id.idLow} $name $uuid")
 
+            val offsetTable: AssetCp.FramedAssetBundle.OffsetTable.Reader = indexSection.offsetTable
 
             val offset = offsetTable.offsets[i]
             val size = offsetTable.sizes[i]
             val usize = offsetTable.uncompressedSizes[i]
-            val factory = LZ4Factory.fastestInstance()
 
 
-            val buf = ByteBuffer.allocate(size.toInt())
-            file.inputStream().channel.read(buf, offset)
-            buf.rewind()
-
-            val ubuf = ByteBuffer.allocate(usize.toInt())
-            factory.fastDecompressor().decompress(buf, ubuf)
-
-            ubuf.rewind()
-            val reader = Serialize.read(ubuf).getRoot(AssetCp.Asset.factory)
-
-            assetSet.add( Asset(object : AssetReaderFactory {
+            object : AssetReaderFactory {
                 override val name = name.toString()
-                override val uuid = id.toString()
-                override val reader: AssetCp.Asset.Reader
-                    get() = reader
-            }))
+                override val uuid = uuid.toString()
+                override val reader : AssetCp.Asset.Reader
+                    get() {
+                        val buf = ByteBuffer.allocate(size.toInt())
+                        inputChannel.read(buf, offset)
+                        buf.rewind()
+
+                        val ubuf = ByteBuffer.allocate(usize.toInt())
+                        lz4Factory.fastDecompressor().decompress(buf, ubuf)
+
+                        ubuf.rewind()
+                        return Serialize.read(ubuf).getRoot(AssetCp.Asset.factory)
+                    }
+            } as AssetReaderFactory
         }
-    }
 }

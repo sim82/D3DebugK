@@ -197,11 +197,11 @@ constructor() {
 
 
     fun runOnUiThread(op: () -> Unit) {
-        if (com.sun.glass.ui.Application.isEventThread()) {
-            op()
-        } else {
+//        if (com.sun.glass.ui.Application.isEventThread()) {
+//            op()
+//        } else {
             javafx.application.Platform.runLater(op)
-        }
+//        }
     }
 
     private fun handleAddBreakpoint(debugReply: Game.DebugReply.Reader) {
