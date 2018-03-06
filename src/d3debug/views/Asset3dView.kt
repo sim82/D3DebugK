@@ -63,13 +63,13 @@ class Asset3dController : Controller() {
     val forwardDirProperty = SimpleObjectProperty<Point3D>(this, "forwardDir", Point3D(0.0, 0.0, 1.0))
     var forwardDir by forwardDirProperty
 
-    val rightDirProperty = SimpleObjectProperty<Point3D>(this, "rightDir", Point3D(1.0, 0.0, 0.0))
+    val rightDirProperty = SimpleObjectProperty<Point3D>(this, "rightDir", Point3D(-1.0, 0.0, 0.0))
     var rightDir by rightDirProperty
 
     val viewOriginProperty = SimpleObjectProperty<Point3D>(this, "viewOrigin", Point3D(0.0, 0.0, -50.0))
     var viewOrigin by viewOriginProperty
 
-    val viewOriginTransformProperty = SimpleObjectProperty<Translate>( this, "viewOriginTransform", Translate())
+    val viewOriginTransformProperty = SimpleObjectProperty<Translate>(this, "viewOriginTransform", Translate())
     var viewOriginTransform by viewOriginTransformProperty
 
     val forwardVelocityProperty = SimpleObjectProperty<Point3D>(this, "forwardVelocity", Point3D(0.0, 0.0, 0.0))
@@ -78,17 +78,22 @@ class Asset3dController : Controller() {
     val rightVelocityProperty = SimpleObjectProperty<Point3D>(this, "rightVelocity", Point3D(0.0, 0.0, 0.0))
     var rightVelocity by rightVelocityProperty
 
-    val viewLatProperty = SimpleDoubleProperty( this, "viewLat", 0.0)
+    val viewLatProperty = SimpleDoubleProperty(this, "viewLat", 0.0)
     var viewLat by viewLatProperty
 
-    val viewLonProperty = SimpleDoubleProperty( this, "viewLon", 0.0)
+    val viewLonProperty = SimpleDoubleProperty(this, "viewLon", 0.0)
     var viewLon by viewLonProperty
 
-    val viewLatTransformProperty = SimpleObjectProperty<Rotate>( this, "viewLatTransform", Rotate(0.0, Point3D(1.0, 0.0, 0.0)))
+    val viewLatTransformProperty = SimpleObjectProperty<Rotate>(this, "viewLatTransform", Rotate())
     var viewLatTransform by viewLatTransformProperty
 
-    val viewLonTransformProperty = SimpleObjectProperty<Rotate>( this, "viewLonTransform", Rotate(0.0, Point3D(0.0, 1.0, 0.0)))
+    val viewLonTransformProperty = SimpleObjectProperty<Rotate>(this, "viewLonTransform", Rotate())
     var viewLonTransform by viewLonTransformProperty
+
+    init {
+        viewLatTransform.axis = Rotate.X_AXIS
+        viewLonTransform.axis = Rotate.Y_AXIS
+    }
 }
 
 class Asset3dView : View() {
@@ -117,10 +122,9 @@ class Asset3dView : View() {
         val scene3d = SubScene(group, VIEWPORT_SIZE.toDouble(), VIEWPORT_SIZE * 9.0 / 16, true, SceneAntialiasing.BALANCED)
 
         val camera = PerspectiveCamera(true).apply {
-            translateZ = -50.0
             nearClip = 0.01
             farClip = 1000.0
-
+            fieldOfView = 60.0
         }
 
 
@@ -136,8 +140,9 @@ class Asset3dView : View() {
             dragDownY = it.y
         }
         scene3d.setOnMouseDragged { event ->
-            val dX = event.x - dragDownX
-            val dY = event.y - dragDownY
+            val dX = (event.x - dragDownX).coerceIn(-3.0, 3.0)
+            val dY = (event.y - dragDownY).coerceIn(-3.0, 3.0)
+
 
 
             with(asset3dController) {
@@ -149,25 +154,31 @@ class Asset3dView : View() {
                     viewLon -= 360.0
                 }
 
-                viewLat += dY
-                if (viewLat > 180.0) {
-                    viewLat = 180.0
-                }
-                else if (viewLat < -180.0) {
-                    viewLat = -180.0
-                }
+                viewLat = (viewLat + dY).coerceIn(-90.0, 90.0)
 
-//                println( "viewLon=$viewLon viewLat=$viewLat")
-
+//                println( "x=${event.y} dY=$dY viewLon=$viewLon viewLat=$viewLat")
             }
             dragDownX = event.x
             dragDownY = event.y
-
         }
 
         scene3d.fill = Color.rgb(10, 10, 40)
+//        scene3d.camera = camera
+//        scene3d.camera.transforms.addAll(asset3dController.viewLatTransform, asset3dController.viewLonTransform, asset3dController.viewOriginTransform)
+
+        val correct2dTo3d = Rotate()
+        correct2dTo3d.axis = Rotate.Z_AXIS
+        correct2dTo3d.angle = 180.0
+
+        group {
+            transforms.addAll(asset3dController.viewOriginTransform, asset3dController.viewLonTransform, asset3dController.viewLatTransform, correct2dTo3d)
+//            transforms.addAll(asset3dController.viewLonTransform)
+            add(camera)
+        }.let {
+            scene3d.add(it)
+        }
+
         scene3d.camera = camera
-        scene3d.camera.transforms.addAll(asset3dController.viewLatTransform, asset3dController.viewLonTransform, asset3dController.viewOriginTransform)
         return scene3d
     }
 
@@ -227,12 +238,18 @@ class Asset3dView : View() {
                 else -> Point3D.ZERO
             }
 
-            viewLonTransform.angle = viewLon
+
+//            viewLonTransform.
+
+            val vel = viewLonTransform.transform(viewLatTransform.transform(forwardVelocity + rightVelocity))
+
+            viewLonTransform.angle = -viewLon
             viewLatTransform.angle = viewLat
 
-            viewOrigin += (forwardVelocity + rightVelocity) * frameTime.toSeconds()
 
-            with (viewOriginTransform) {
+            viewOrigin += vel * frameTime.toSeconds()
+
+            with(viewOriginTransform) {
                 x = viewOrigin.x
                 y = viewOrigin.y
                 z = viewOrigin.z
