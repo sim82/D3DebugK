@@ -24,6 +24,7 @@
 
 package d3debug
 
+import d3debug.domain.readAppearances
 import d3debug.views.Asset3dView
 import d3debug.views.AssetView
 import javafx.application.Application
@@ -34,6 +35,7 @@ import javafx.scene.PointLight
 import javafx.scene.shape.Box
 import javafx.util.Duration
 import tornadofx.*
+import java.io.FileReader
 
 
 class TestViewController : Controller()
@@ -94,5 +96,6 @@ class AssetBrowser : App(Workspace::class) {
 
 
 fun main(args: Array<String>) {
+
     Application.launch(AssetBrowser::class.java, *args)
 }

@@ -24,8 +24,10 @@
 
 package d3debug.controllers
 
+import d3debug.domain.Appearance
 import d3debug.domain.Asset
 import d3debug.domain.AssetGroup
+import d3debug.domain.readAppearances
 import d3debug.loaders.loaderFor
 import d3debug.viewmodels.AssetGroupModel
 import javafx.beans.property.DoubleProperty
@@ -35,6 +37,8 @@ import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import tornadofx.*
+import java.io.File
+import java.io.FilenameFilter
 
 fun String.prefixBefore(c: Char): String {
     val i = indexOfLast { it == c }
@@ -59,6 +63,20 @@ class AssetsController : Controller() {
     var iconSizeProperty: DoubleProperty? = null
 
     val assetGroupModel: AssetGroupModel by inject()
+
+    val appearances by lazy<Map<String, Appearance>> {
+        val map = hashMapOf<String, Appearance>()
+
+        File("/home/sim/src_3dyne/dd_081131_exec/dd1/arch00.dir/appearance/").listFiles { _, name ->
+            name.endsWith(".json")
+        }.forEach {
+            readAppearances(it.reader()).forEach {
+                map[it.name] = it
+            }
+        }
+
+        map
+    }
 
     init {
 

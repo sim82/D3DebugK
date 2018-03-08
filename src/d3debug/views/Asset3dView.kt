@@ -34,6 +34,7 @@ import javafx.scene.Group
 import javafx.scene.PerspectiveCamera
 import javafx.scene.SceneAntialiasing
 import javafx.scene.SubScene
+import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
@@ -42,6 +43,7 @@ import javafx.scene.transform.Rotate
 import javafx.scene.transform.Translate
 import javafx.util.Duration
 import tornadofx.*
+import java.io.File
 import java.util.*
 
 operator fun Point3D.times(factor: Double): Point3D = multiply(factor)
@@ -106,13 +108,15 @@ class Asset3dView : View() {
         val group = Group()
         val rand = Random()
 
-        controller.assetGroups.flatMap { it.assets }.flatMap { it.meshes.asIterable() }.forEach {
+        controller.assetGroups.flatMap { it.assets }.flatMap { it.readMeshes(controller.appearances).asIterable() }.forEach { (appearance, mesh) ->
+
+            println( appearance )
+            val meshView = MeshView(mesh)
 
 
-            val meshView = MeshView(it)
+            meshView.material = appearance.material
+            //meshView.material.diffuseMap
 
-
-            meshView.material = PhongMaterial(Color(rand.nextDouble(), rand.nextDouble(), rand.nextDouble(), 1.0))
             group.add(meshView)
         }
         return group
