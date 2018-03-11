@@ -38,7 +38,6 @@ import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import tornadofx.*
 import java.io.File
-import java.io.FilenameFilter
 
 fun String.prefixBefore(c: Char): String {
     val i = indexOfLast { it == c }
@@ -64,13 +63,25 @@ class AssetsController : Controller() {
 
     val assetGroupModel: AssetGroupModel by inject()
 
+    fun assetByName(name: String): Asset? {
+        listOf("", ".png", ".jpg").forEach {
+            val asset = assetByName.get(name + it)
+            if (asset != null) {
+                return asset
+            }
+        }
+        return null
+    }
+
+    val assetByName = hashMapOf<String, Asset>()
+
     val appearances by lazy<Map<String, Appearance>> {
         val map = hashMapOf<String, Appearance>()
 
         File("/home/sim/src_3dyne/dd_081131_exec/dd1/arch00.dir/appearance/").listFiles { _, name ->
             name.endsWith(".json")
         }.forEach {
-            readAppearances(it.reader()).forEach {
+            readAppearances(it.reader(), ::assetByName).forEach {
                 map[it.name] = it
             }
         }
@@ -83,8 +94,14 @@ class AssetsController : Controller() {
         val grouped = sequenceOf(assetDir.assets, scene.assets).flatten().groupBy { it.name.prefixBefore('/') }
 
         for ((groupName, list) in grouped) {
+            val assets = list.map { Asset(it) }
+
+            assets.forEach {
+                assetByName[it.name] = it
+            }
+
             val group = AssetGroup(groupName)
-            group.assets.addAll(list.map { Asset(it) })
+            group.assets.addAll(assets)
 //
 //            for (a in group.assets) {
 //                val x= a.meshes

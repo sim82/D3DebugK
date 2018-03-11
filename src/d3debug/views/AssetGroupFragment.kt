@@ -43,6 +43,7 @@ class AssetPreviewFragment : Fragment() {
 
 
     override val root = vbox {
+        label(assetGroupModel.selectedAssets.value.nameProperty)
         imageview(assetGroupModel.selectedAssets.value.image2) {
             val box = Box(100.0, 100.0, 100.0)
             val group = Group(box)

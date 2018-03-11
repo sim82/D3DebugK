@@ -24,42 +24,59 @@
 
 package d3debug.domain
 
-import javafx.scene.image.Image
-import javafx.scene.paint.Color
-import javafx.scene.paint.Material
 import javafx.scene.paint.PhongMaterial
-import java.io.File
 import java.io.Reader
 import javax.json.Json
 import javax.json.JsonObject
 
-fun readAppearances(input: Reader): Sequence<Appearance> {
+typealias AssetFactory = (String) -> Asset?
+
+fun readAppearances(input: Reader, assetFactory: AssetFactory): Sequence<Appearance> {
     val jsonReader = Json.createReader(input)
     val root = jsonReader.read() as? JsonObject ?: return emptySequence()
 
     return root.asSequence().map { (k, v) ->
         val app = v as? JsonObject ?: return@map null
 
-        Appearance(k, app.getString("primaryImage"))
+        Appearance(k, assetFactory, app) //.getString("primaryImage"))
     }.filterNotNull()
 }
 
-data class Appearance(val name: String, val primaryImage: String) {
+class Appearance(val name: String, val assetFactory: AssetFactory, app: JsonObject) {
 
-    val material by lazy<Material> {
-        val basePath = File("/home/sim/src_3dyne/dd_081131_exec/dd1/arch00.dir")
+    class MaterialInput(config: JsonObject) {
+        val diffuse: String? = config.getString("image", null)
+        val normalMap: String? = null //config.getString("bumpmap", null)
+        val specularMap: String? = config.getString("glossmap", null)
 
-        listOf(".png", ".jpg").forEach {
-            val f = File(basePath, primaryImage + it)
-            if (f.canRead()) {
-                println(f)
+//        init {
+//            if (config.getString("glossmap", null) != null) {
+//                println("gloss")
+//            }
+//        }
+    }
 
-                val mat = PhongMaterial()
-                mat.diffuseMap = Image(f.inputStream())//Color(rand.nextDouble(), rand.nextDouble(), rand.nextDouble(), 1.0))
-                return@lazy mat
+    val materialConfig = MaterialInput(app.getJsonObject("shaderConfig")!!)
+    val material = PhongMaterial()
+
+    init {
+        if (materialConfig.diffuse != null) {
+            assetFactory(materialConfig.diffuse)?.let {
+                it.loadImageAsync()
+                material.diffuseMapProperty().bind(it.imageProperty)
             }
         }
-
-        throw RuntimeException( "cannot read primaryImage")
+        if (materialConfig.normalMap != null) {
+            assetFactory(materialConfig.normalMap)?.let {
+                it.loadImageAsync()
+                material.bumpMapProperty().bind(it.imageProperty)
+            }
+        }
+        if (materialConfig.specularMap != null) {
+            assetFactory(materialConfig.specularMap)?.let {
+                it.loadImageAsync()
+                material.specularMapProperty().bind(it.imageProperty)
+            }
+        }
     }
 }
