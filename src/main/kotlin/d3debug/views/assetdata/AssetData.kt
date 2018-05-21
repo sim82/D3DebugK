@@ -15,11 +15,11 @@ import java.util.*
 
 class Global {
     companion object : tornadofx.Component() {
-        private val assetsControler: AssetsController by inject()
+        private val assetsController: AssetsController by inject()
 
-        fun assetByName(name: String): Asset? = assetsControler.assetByName(name)
+        fun assetByName(name: String): Asset? = assetsController.assetByName(name)
 
-        val assetDataMap = hashMapOf<UUID, AssetData>()
+        private val assetDataMap = hashMapOf<UUID, AssetData>()
 
         fun createAssetData(asset: Asset): AssetData =
                 assetDataMap.getOrPut(UUID.fromString(asset.uuid)) {

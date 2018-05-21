@@ -80,8 +80,6 @@ fun createNormalMapFromHeightMap(image: Image): Image {
 
     val width = image.width.toInt()
     val height = image.height.toInt()
-    val format = image.pixelReader.pixelFormat
-//    image.pixelReader.getPixels(0, 0, width, height)
     val inputBuf = ShortArray(width * height)
 //    image.pixelReader.getPixels(0, 0, width, height, format., inputBuf, 0, width)
 

@@ -47,7 +47,7 @@ fun String.prefixBefore(c: Char): String {
 
 class AssetsController : Controller() {
 
-        val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
+    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
     //    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
     //val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/out.fab")
     val scene = loaderFor("/home/sim/tmp/shadermesh_assets")
@@ -101,22 +101,13 @@ class AssetsController : Controller() {
 
             val group = AssetGroup(groupName)
             group.assets.addAll(assets)
-//
-//            for (a in group.assets) {
-//                val x= a.meshes
-//
-//
-//                x.forEach {
-//                    println(it)
-//                }
-//            }
 
             assetGroups += group
 
-//            for (asset in group.assets) {
-//                println("${asset.name} ${asset.uuid}")
-//            }
         }
+
+        assetGroups.sortBy { it.name }
+
         assetGroupModel.selectedAssets.onChange {
             println("selected ${it?.name}")
         }

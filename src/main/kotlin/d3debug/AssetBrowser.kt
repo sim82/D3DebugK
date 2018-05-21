@@ -94,6 +94,6 @@ class AssetBrowser : App(Workspace::class) {
 }
 
 fun main(args: Array<String>) {
-    Thread.setDefaultUncaughtExceptionHandler { t, e ->  }
+    Thread.setDefaultUncaughtExceptionHandler { _, _ ->  }
     Application.launch(AssetBrowser::class.java, *args)
 }

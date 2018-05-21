@@ -5,7 +5,7 @@ import d3debug.domain.AssetType
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.scene.image.ImageView
 
-class AssetDataPcm(reader: AssetCp.AssetPcmData.Reader) : AssetData() {
+class AssetDataPcm(val reader: AssetCp.AssetPcmData.Reader) : AssetData() {
     override val assetType: AssetType = AssetType.Unknown
     override val previewSize = SimpleDoubleProperty(this, "previewSize", 100.0)
 

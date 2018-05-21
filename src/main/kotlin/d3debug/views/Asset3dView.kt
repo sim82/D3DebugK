@@ -25,6 +25,8 @@
 package d3debug.views
 
 import d3debug.controllers.AssetsController
+import d3debug.views.assetdata.AssetDataMesh
+import d3debug.views.assetdata.createAssetData
 import javafx.animation.Animation
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
@@ -106,17 +108,16 @@ class Asset3dView : View() {
 
     private fun buildSceneFromAssets(): Group {
         val group = Group()
-        val rand = Random()
 
-        controller.assetGroups.flatMap { it.assets }.flatMap { it.readMeshes(controller::assetByName).asIterable() }.forEach { (appearance, mesh) ->
+        controller.assetGroups
+                .flatMap {it.assets}
+                .mapNotNull {createAssetData(it) as? AssetDataMesh }
+                .flatMap {it.readMeshes(controller::assetByName).asIterable() }
+                .forEach { (appearance, mesh) ->
 
             println( appearance )
             val meshView = MeshView(mesh)
-
-
             meshView.material = appearance.material
-            //meshView.material.diffuseMap
-
             group.add(meshView)
         }
         return group

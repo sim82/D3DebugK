@@ -9,7 +9,69 @@ import javafx.scene.image.ImageView
 import javafx.scene.image.PixelFormat
 import javafx.scene.image.WritableImage
 import tornadofx.*
+import java.io.InputStream
 import java.nio.ByteBuffer
+
+
+class ByteBufferBackedInputStream(internal var buf: ByteBuffer) : InputStream() {
+
+    init {
+//        buf.reset()
+    }
+
+    override fun read(): Int {
+        return if (!buf.hasRemaining()) {
+            -1
+        } else buf.get().toInt() and 0xFF
+    }
+
+    override fun read(bytes: ByteArray, off: Int, len: Int): Int {
+        if (!buf.hasRemaining()) {
+            return -1
+        }
+
+        val minLen = Math.min(len, buf.remaining())
+        buf.get(bytes, off, minLen)
+        return minLen
+    }
+}
+
+fun swapRgba(buf: ByteArray) {
+
+    for (i in 0 until buf.size step 4) {
+        val r = buf[i]
+        val b = buf[i + 2]
+
+        buf[i] = b
+        buf[i + 2] = r
+    }
+}
+
+fun swapRgb(buf: ByteArray) {
+    for (i in 0 until buf.size step 3) {
+        val r = buf[i]
+        val b = buf[i + 2]
+
+        buf[i] = b
+        buf[i + 2] = r
+    }
+}
+
+fun ByteArray.swapAt(i1: Int, i2: Int) {
+    val tmp = this[i1]
+    this[i1] = this[i2]
+    this[i2] = tmp
+}
+
+fun ByteArray.flipScanlines(stride: Int) {
+    for (y in 0 until size / 2 step stride) {
+        for (x in 0 until stride) {
+            swapAt(y + x, size - stride - y + x)
+        }
+    }
+}
+
+
 
 class AssetDataPixel(val reader: AssetCp.AssetPixelData.Reader) : AssetData() {
     override val assetType: AssetType = AssetType.Image
