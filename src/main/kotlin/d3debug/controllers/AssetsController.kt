@@ -74,19 +74,19 @@ class AssetsController : Controller() {
     val assetByName = hashMapOf<String, Asset>()
 //    fun findAssetByName( name : String ) = assetByName[name]
 
-    val appearances by lazy<Map<String, Appearance>> {
-        val map = hashMapOf<String, Appearance>()
-
-        File("/home/sim/src_3dyne/dd_081131_exec/dd1/arch00.dir/appearance/").listFiles { _, name ->
-            name.endsWith(".json")
-        }.forEach {
-            readAppearances(it.reader(), ::assetByName).forEach {
-                map[it.name] = it
-            }
-        }
-
-        map
-    }
+//    val appearances by lazy<Map<String, Appearance>> {
+//        val map = hashMapOf<String, Appearance>()
+//
+//        File("/home/sim/src_3dyne/dd_081131_exec/dd1/arch00.dir/appearance/").listFiles { _, name ->
+//            name.endsWith(".json")
+//        }.forEach {
+//            readAppearances(it.reader(), ::assetByName).forEach {
+//                map[it.name] = it
+//            }
+//        }
+//
+//        map
+//    }
 
     init {
 
