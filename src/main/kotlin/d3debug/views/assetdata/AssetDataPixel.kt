@@ -1,7 +1,7 @@
 package d3debug.views.assetdata
 
 import d3cp.AssetCp
-import d3debug.domain.*
+import d3debug.domain.AssetType
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.scene.image.Image
@@ -13,7 +13,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 
 
-class ByteBufferBackedInputStream(internal var buf: ByteBuffer) : InputStream() {
+class ByteBufferBackedInputStream(private var buf: ByteBuffer) : InputStream() {
 
     init {
 //        buf.reset()
@@ -111,7 +111,7 @@ class AssetDataPixel(val reader: AssetCp.AssetPixelData.Reader) : AssetData() {
         Undefined(0, null, null)
     }
 
-    fun intToAssetPixelFormat(v: Int) = AssetCookedPixelFormat.values()[v.coerceIn(0 until AssetCookedPixelFormat.values().size)]
+    private fun intToAssetPixelFormat(v: Int) = AssetCookedPixelFormat.values()[v.coerceIn(0 until AssetCookedPixelFormat.values().size)]
 //
 //    fun toJavafxPixelformat(f: AssetCookedPixelFormat) = when (f) {
 //        AssetCookedPixelFormat.RGBA -> PixelFormat.getByteBgraInstance()
@@ -154,7 +154,6 @@ class AssetDataPixel(val reader: AssetCp.AssetPixelData.Reader) : AssetData() {
 
 
     private fun createImageFromPixelDataStored(pixelData: AssetCp.AssetPixelDataStored.Reader) : Image {
-        val image = Image(ByteBufferBackedInputStream(pixelData.data.asByteBuffer()), 0.0, 0.0, true, true)
 
 //        val format = image.pixelReader.pixelFormat
 //
@@ -162,7 +161,7 @@ class AssetDataPixel(val reader: AssetCp.AssetPixelData.Reader) : AssetData() {
 //            return createNormalMapFromHeightMap(image)
 //        }
 
-        return image
+        return Image(ByteBufferBackedInputStream(pixelData.data.asByteBuffer()), 0.0, 0.0, true, true)
     }
 
     override fun loadSync() {
@@ -174,7 +173,7 @@ class AssetDataPixel(val reader: AssetCp.AssetPixelData.Reader) : AssetData() {
 
     override fun loadAsync() {
         if (image != null) {
-            return;
+            return
         }
 
         runAsync {

@@ -31,9 +31,7 @@ import d3debug.viewmodels.NormalMapModel
 import d3debug.views.assetdata.AssetDataPixel
 import d3debug.views.assetdata.createAssetData
 import d3debug.views.assetdata.withAssetData
-import javafx.scene.Group
 import javafx.scene.layout.Priority
-import javafx.scene.shape.Box
 import tornadofx.*
 
 
@@ -88,7 +86,7 @@ class AssetGroupFragment : Fragment() {
             assetsController.iconSizeProperty = valueProperty()
         }
 
-        datagrid<Asset>() {
+        datagrid<Asset> {
             vgrow = Priority.ALWAYS
 
 //            val scrollbar = find

@@ -26,9 +26,7 @@ package d3debug.domain
 
 import d3cp.AssetCp
 import d3debug.loaders.AssetReaderFactory
-import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
-import javafx.scene.image.Image
 import tornadofx.*
 
 enum class AssetType {
@@ -41,27 +39,20 @@ enum class AssetType {
 
 class Asset(val factory: AssetReaderFactory) {
     val uuidProperty = SimpleStringProperty(this, "uuid", factory.uuid)
-    var uuid by uuidProperty
+    var uuid: String by uuidProperty
 
     val nameProperty = SimpleStringProperty(this, "name", factory.name)
-    var name by nameProperty
+    var name: String by nameProperty
 
-    val imageProperty = SimpleObjectProperty<Image>(this, "image", null)
-    var image2 by imageProperty
-
-    var assetType: AssetType// = AssetType.Unknown
-
-    val reader by lazy<AssetCp.Asset.Reader> {
-        factory.reader
+    var assetType: AssetType = when (factory.reader.which()) {
+        AssetCp.Asset.Which.PIXEL_DATA -> AssetType.Image
+        AssetCp.Asset.Which.MESH_DATA -> AssetType.Mesh
+        AssetCp.Asset.Which.MATERIAL_DESC -> AssetType.Appearance
+        else -> AssetType.Unknown
     }
 
-    init {
-        assetType = when (factory.reader.which()) {
-            AssetCp.Asset.Which.PIXEL_DATA -> AssetType.Image
-            AssetCp.Asset.Which.MESH_DATA -> AssetType.Mesh
-            AssetCp.Asset.Which.MATERIAL_DESC -> AssetType.Appearance
-            else -> AssetType.Unknown
-        }
+    val reader by lazy {
+        factory.reader
     }
 
 

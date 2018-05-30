@@ -32,10 +32,10 @@ class ExecuteModel : ViewModel() {
     val scriptController: ScriptsController by inject()
 
     val inputTextProperty = SimpleStringProperty(this, "inputText", "")
-    var inputText by inputTextProperty
+    var inputText: String by inputTextProperty
 
     val consoleTextProperty = SimpleStringProperty(this, "consoleText", "")
-    var consoleText by consoleTextProperty
+    var consoleText: String by consoleTextProperty
 
     fun addText(text: String) {
         consoleText += text

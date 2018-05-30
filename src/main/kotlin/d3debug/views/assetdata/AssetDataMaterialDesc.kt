@@ -18,10 +18,10 @@ class AssetDataMaterialDesc(val reader: AssetCp.AssetMaterialDesc.Reader) : Asse
     val material : PhongMaterial
 
     init {
-        var mat = PhongMaterial()
+        val mat = PhongMaterial()
         material = mat
         if (reader.isPhong) {
-            var phong = reader.phong!!
+            val phong = reader.phong!!
 
             fun findPixelData(name: String): AssetDataPixel? {
                 return Global.assetByName(name)?.let { asset ->
@@ -37,7 +37,7 @@ class AssetDataMaterialDesc(val reader: AssetCp.AssetMaterialDesc.Reader) : Asse
 //                        mat.diffuseMap = it.image
                 }
             }
-            if (!false && phong.hasNormalMap()) {
+            if (phong.hasNormalMap()) {
                 findPixelData(phong.normalMap.toString())?.let {
                     it.loadSync()
 
@@ -51,7 +51,7 @@ class AssetDataMaterialDesc(val reader: AssetCp.AssetMaterialDesc.Reader) : Asse
 
                 }
             }
-            if (!false && phong.hasSpecularMap()) {
+            if (phong.hasSpecularMap()) {
                 findPixelData(phong.specularMap.toString())?.let {
                     it.loadAsync()
                     mat.specularMapProperty().bind(it.imageProperty)

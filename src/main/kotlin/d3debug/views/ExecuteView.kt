@@ -24,7 +24,6 @@
 
 package d3debug.views
 
-import d3debug.controllers.ScriptsController
 import d3debug.viewmodels.ExecuteModel
 import tornadofx.*
 

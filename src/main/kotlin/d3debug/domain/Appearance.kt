@@ -25,19 +25,14 @@
 package d3debug.domain
 
 import d3cp.AssetCp
-import d3debug.views.assetdata.AssetDataPixel
 import d3debug.loaders.AssetLoader
 import d3debug.loaders.AssetReaderFactory
-import d3debug.views.assetdata.createAssetData
-import javafx.scene.paint.PhongMaterial
 import org.capnproto.MessageBuilder
 import java.io.File
-import java.io.Reader
 import java.util.*
 import javax.json.Json
 import javax.json.JsonObject
 
-typealias AssetFactory = (String) -> Asset?
 //
 //fun readAppearances(input: Reader, assetFactory: AssetFactory): Sequence<Appearance> {
 //    val jsonReader = Json.createReader(input)

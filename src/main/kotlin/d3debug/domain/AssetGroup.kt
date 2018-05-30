@@ -27,10 +27,9 @@ package d3debug.domain
 import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
-import javafx.collections.ObservableList
 import tornadofx.*
 
-class AssetGroup(val name: String, val parent: AssetGroup? = null) {
+class AssetGroup(val name: String) {
     val assetsProperty = SimpleListProperty<Asset>(this, "assetSet", FXCollections.observableArrayList<Asset>())
     var assets by assetsProperty
 //

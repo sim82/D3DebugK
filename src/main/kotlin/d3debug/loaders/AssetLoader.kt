@@ -24,7 +24,6 @@
 
 package d3debug.loaders
 
-import d3debug.domain.Asset
 import java.io.File
 
 interface AssetLoader {

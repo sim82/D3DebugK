@@ -1,11 +1,10 @@
 package d3debug.views
 
 import d3debug.viewmodels.NormalMapModel
-import javafx.scene.Parent
 import tornadofx.*
 
 class NormalMapView : View() {
-    val model : NormalMapModel by inject()
+    private val model : NormalMapModel by inject()
 
     override val root = vbox {
         button {

@@ -1,6 +1,7 @@
 package d3debug.views.assetdata
 
 import d3cp.AssetCp
+import d3cp.Scene
 import d3debug.domain.Asset
 import d3debug.domain.AssetType
 import javafx.beans.property.SimpleDoubleProperty
@@ -32,7 +33,7 @@ class AssetDataMesh(val reader: AssetCp.AssetMeshData.Reader) : AssetData() {
 
         val appearancesList = reader.appearanceList.asSequence().map { assetFactory(it.toString()) }
 
-        val meshes = appearancesList.zip(reader.attributeArrayInterleavedList.asSequence()).map { (app, array) ->
+        return appearancesList.zip(reader.attributeArrayInterleavedList.asSequence()).map<Pair<Asset?, Scene.AttributeArrayInterleaved.Reader>, Pair<AssetDataMaterialDesc, TriangleMesh>?> { (app, array) ->
             //            app ?: return@map null
 
             if (app == null || app.assetType != AssetType.Appearance ) {
@@ -97,8 +98,6 @@ class AssetDataMesh(val reader: AssetCp.AssetMeshData.Reader) : AssetData() {
 
             Pair(appData, mesh)
         }.filterNotNull()
-
-        return meshes
     }
 
 

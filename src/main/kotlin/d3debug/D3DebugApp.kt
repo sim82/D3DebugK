@@ -34,8 +34,6 @@ import tornadofx.*
 
 class D3DebugApp : App(Workspace::class) {
 
-    val assetController: AssetsController by inject()
-
     override fun onBeforeShow(view: UIComponent) {
         Thread.setDefaultUncaughtExceptionHandler(null)
         with(workspace.leftDrawer)

@@ -35,7 +35,7 @@ import java.nio.channels.FileChannel
 import java.util.*
 
 object ConvertLongToUuid {
-    val bb = ByteBuffer.allocate(16)
+    private val bb = ByteBuffer.allocate(16)!!
 
     fun convert(idLow: Long, idHigh: Long): UUID {
         bb.order(ByteOrder.LITTLE_ENDIAN)
@@ -47,7 +47,7 @@ object ConvertLongToUuid {
     }
 }
 
-internal class FramedAssetBundle(val filename: String) : AssetLoader {
+internal class FramedAssetBundle(filename: String) : AssetLoader {
     private val lz4Factory = LZ4Factory.fastestInstance()
 
     private val file = File(filename)

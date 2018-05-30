@@ -42,7 +42,7 @@ class TestViewController : Controller() {
 }
 
 class TestView : View() {
-    val controller by inject<TestViewController>()
+    private val controller by inject<TestViewController>()
 
     override val root = vbox {
         slider(0.0, 1000.0) {

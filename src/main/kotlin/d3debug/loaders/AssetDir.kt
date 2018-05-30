@@ -29,8 +29,8 @@ import org.capnproto.Serialize
 import java.io.File
 import java.nio.channels.FileChannel
 
-internal class AssetDir(val rootPath: String) : AssetLoader {
-    val rootDir = File(rootPath)
+internal class AssetDir(private val rootPath: String) : AssetLoader {
+    private val rootDir = File(rootPath)
 
     private val indexReader by lazy {
         val rootDir = File(rootPath)

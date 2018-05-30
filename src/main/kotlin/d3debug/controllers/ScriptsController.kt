@@ -38,8 +38,7 @@ class ScriptsController : Controller() {
 
     val watchpoints = FXCollections.observableArrayList<Watchpoint>()!!
 
-    val scriptModel: ScriptModel by inject()
-    val watchpointModel: WatchpointModel by inject()
+    private val scriptModel: ScriptModel by inject()
 
     init {
         debugConnection.scriptInfoRequest {

@@ -47,7 +47,7 @@ class ScriptModel : ItemViewModel<Script>() {
         }
 
         controller.addWatchpoint(id.value.toInt(), line) {
-            watchpoints.value.add(it);
+            watchpoints.value.add(it)
         }
     }
 }

@@ -38,8 +38,6 @@ import java.nio.channels.CompletionHandler
 import java.util.HashMap
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
-import kotlin.collections.Map
-import kotlin.collections.mapTo
 import kotlin.collections.set
 
 
@@ -129,9 +127,7 @@ constructor() {
     fun scriptGetRequest(id: Int, h: ScriptGetReplyHandler) {
         withDebugRequest { debugRequest ->
 
-            debugRequest.initScriptGet().let {
-                it.id = id
-            }
+            debugRequest.initScriptGet().id = id
 
             scriptGetReplyHandlers[nextToken] = h
         }
@@ -196,7 +192,7 @@ constructor() {
     }
 
 
-    fun runOnUiThread(op: () -> Unit) {
+    private fun runOnUiThread(op: () -> Unit) {
 //        if (com.sun.glass.ui.Application.isEventThread()) {
 //            op()
 //        } else {
@@ -247,7 +243,7 @@ constructor() {
 
         val handler = executeReplyHandlers.remove(debugReply.token) ?: return
 
-        val execute = debugReply.execute;
+        val execute = debugReply.execute
 
         runOnUiThread {
             handler(execute.consoleOutput.toString(), execute.error)
@@ -260,7 +256,7 @@ constructor() {
 
         runOnUiThread {
             for (h in eventWatchpointHandlers) {
-                val localNames = ArrayList<String>();
+                val localNames = ArrayList<String>()
                 localNames.ensureCapacity(eventWatchpoint.localNames.size())
 
                 eventWatchpoint.localNames.mapTo(localNames) {
@@ -272,7 +268,7 @@ constructor() {
         }
     }
 
-    val eventWatchpointHandlers = HashSet<EventWatchpointHandler>()
+    private val eventWatchpointHandlers = HashSet<EventWatchpointHandler>()
 
     internal inner class RequestBuilder {
         private val messageBuilder: MessageBuilder = MessageBuilder()

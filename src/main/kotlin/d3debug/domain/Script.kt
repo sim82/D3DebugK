@@ -29,12 +29,10 @@ import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleSetProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
-import javafx.collections.ObservableList
-import javafx.collections.ObservableSet
 import tornadofx.*
 
 class Script(id: Int, name: String, sourcecode: Array<String>? = null) {
-    val idProperty = SimpleIntegerProperty(this, "id", id);
+    val idProperty = SimpleIntegerProperty(this, "id", id)
     var id by idProperty
 
     val nameProperty = SimpleStringProperty(this, "name", name)

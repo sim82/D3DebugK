@@ -24,34 +24,31 @@
 
 package d3debug.controllers
 
-import d3debug.domain.*
+import d3debug.domain.Asset
+import d3debug.domain.AssetGroup
+import d3debug.domain.fakeAppearanceLoader
 import d3debug.loaders.loaderFor
 import d3debug.viewmodels.AssetGroupModel
 import javafx.beans.property.DoubleProperty
 import javafx.collections.FXCollections
-import javafx.scene.canvas.Canvas
-import javafx.scene.image.Image
-import javafx.scene.image.WritableImage
-import javafx.scene.paint.Color
 import tornadofx.*
-import java.io.File
 
 fun String.prefixBefore(c: Char): String {
     val i = indexOfLast { it == c }
-    if (i == -1) {
-        return ""
+    return if (i == -1) {
+        ""
     } else {
-        return substring(0, i)
+        substring(0, i)
     }
 }
 
 class AssetsController : Controller() {
 
-    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
+    private val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla")
     //    val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/bla_cooked.bundle")
     //val assetDir = loaderFor("/home/sim/src_3dyne/dd_081131_exec/out.fab")
     val scene = loaderFor("/home/sim/tmp/shadermesh_assets")
-    val appearanceLoader = fakeAppearanceLoader()
+    private val appearanceLoader = fakeAppearanceLoader()
 
 //    val assets = FXCollections.observableArrayList<Asset>(assetDir.assets.asIterable() + scene.assets.asIterable())!!
 
@@ -59,11 +56,11 @@ class AssetsController : Controller() {
 
     var iconSizeProperty: DoubleProperty? = null
 
-    val assetGroupModel: AssetGroupModel by inject()
+    private val assetGroupModel: AssetGroupModel by inject()
 
     fun assetByName(name: String): Asset? {
         listOf("", ".png", ".jpg").forEach {
-            val asset = assetByName.get(name + it)
+            val asset = assetByName[name + it]
             if (asset != null) {
                 return asset
             }
@@ -71,7 +68,7 @@ class AssetsController : Controller() {
         return null
     }
 
-    val assetByName = hashMapOf<String, Asset>()
+    private val assetByName = hashMapOf<String, Asset>()
 //    fun findAssetByName( name : String ) = assetByName[name]
 
 //    val appearances by lazy<Map<String, Appearance>> {
@@ -111,18 +108,5 @@ class AssetsController : Controller() {
         assetGroupModel.selectedAssets.onChange {
             println("selected ${it?.name}")
         }
-    }
-
-
-    val fallbackImage: Image by lazy {
-        val canvas = Canvas(32.0, 32.0)
-        val gc = canvas.graphicsContext2D
-
-        val image = WritableImage(32, 32)
-        gc.fill = Color.RED
-        gc.fillText("default", 10.0, 10.0)
-        canvas.snapshot(null, image)
-
-        image
     }
 }

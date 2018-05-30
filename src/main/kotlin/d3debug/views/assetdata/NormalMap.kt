@@ -1,16 +1,10 @@
 package d3debug.views.assetdata
 
-import com.sun.prism.PixelFormat
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
-import javafx.scene.image.WritablePixelFormat
 import javafx.scene.paint.Color
-import java.io.FileOutputStream
-import java.nio.ByteBuffer
 import kotlin.math.sqrt
 
-
-private data class Normal(var x: Short, var y: Short, var z: Short, var mag: Short)
 
 private fun convertHeightFieldToNormalMap(pixels: ShortArray, w: Int, h: Int, wr: Int, hr: Int, scale: Float): Array<Color> {
 
@@ -72,7 +66,7 @@ private fun convertHeightFieldToNormalMap(pixels: ShortArray, w: Int, h: Int, wr
 //        }
 //    }
 
-    return nmap;
+    return nmap
 }
 
 fun createNormalMapFromHeightMap(image: Image): Image {
